@@ -17,43 +17,45 @@ class Exam{
     return $this->db->select($query);
 }
 
-  public function addQuestions($data) {
+public function addQuestions($data) {
     $category_id = $this->fm->validation($data['category_id']);
     $subject_id  = $this->fm->validation($data['subject_id']);
     $quesNo      = $this->fm->validation($data['quesNo']);
-    $ques        = $this->fm->validation($data['ques']);
-    $rightAns    = $this->fm->validation($data['rightAns']);
-
-    $category_id = mysqli_real_escape_string($this->db->link, $category_id);
-    $subject_id  = mysqli_real_escape_string($this->db->link, $subject_id);
-    $quesNo      = mysqli_real_escape_string($this->db->link, $quesNo);
-    $ques        = mysqli_real_escape_string($this->db->link, $ques);
-    $rightAns    = mysqli_real_escape_string($this->db->link, $rightAns);
-
+    $ques        = mysqli_real_escape_string($this->db->link, $data['ques']);
+    
     $ans = array();
-    $ans[1] = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['ans1']));
-    $ans[2] = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['ans2']));
-    $ans[3] = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['ans3']));
-    $ans[4] = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['ans4']));
+    $ans[1] = $this->fm->validation($data['ans1']);
+    $ans[2] = $this->fm->validation($data['ans2']);
+    $ans[3] = $this->fm->validation($data['ans3']);
+    $ans[4] = $this->fm->validation($data['ans4']);
+    $rightAns = $this->fm->validation($data['rightAns']);
 
-    // ১. tbl_ques টেবিলে প্রশ্ন এবং ক্যাটাগরি/সাবজেক্ট আইডি ইনসার্ট
-    $query = "INSERT INTO tbl_ques(quesNo, ques, category_id, subject_id) 
-              VALUES('$quesNo', '$ques', '$category_id', '$subject_id')";
-    $insert_row = $this->db->insert($query);
+    // ১. প্রশ্ন ইনসার্ট
+    $query = "INSERT INTO tbl_ques(quesNo, category_id, subject_id, ques) 
+              VALUES('$quesNo', '$category_id', '$subject_id', '$ques')";
+    
+    $insert_ques = mysqli_query($this->db->link, $query);
 
-    if ($insert_row) {
-        // ২. tbl_ans টেবিলে ৪টি অপশন ও সঠিক উত্তর ইনসার্ট
+    if ($insert_ques) {
+        // ২. নতুন তৈরি হওয়া প্রশ্নের Primary Key (id) গ্রহণ
+        $inserted_ques_id = mysqli_insert_id($this->db->link);
+
+        // ৩. অপশনসমূহ ইনসার্ট (tbl_ans-এর quesNo কলামে Primary Key বসানো)
         foreach ($ans as $key => $ansName) {
-            if ($ansName != '') {
-                $isRight = ($rightAns == $key) ? '1' : '0';
-                $rquery = "INSERT INTO tbl_ans(quesNo, rightAns, ans) 
-                           VALUES('$quesNo', '$isRight', '$ansName')";
-                $this->db->insert($rquery);
+            if (!empty($ansName)) {
+                $rAns = ($rightAns == $key) ? '1' : '0';
+                $ansNameEscaped = mysqli_real_escape_string($this->db->link, $ansName);
+                
+                $ansQuery = "INSERT INTO tbl_ans(quesNo, rightAns, ans) 
+                             VALUES('$inserted_ques_id', '$rAns', '$ansNameEscaped')";
+                
+                mysqli_query($this->db->link, $ansQuery);
             }
         }
-        return "প্রশ্ন সফলভাবে যুক্ত করা হয়েছে!";
+
+        return "<div class='p-4 mb-4 text-sm text-emerald-800 rounded-xl bg-emerald-50 border border-emerald-200'>প্রশ্ন ও উত্তরসমূহ সফলভাবে সেভ হয়েছে!</div>";
     } else {
-        return "প্রশ্ন যুক্ত করতে সমস্যা হয়েছে!";
+        return "<div class='p-4 mb-4 text-sm text-red-800 rounded-xl bg-red-50 border border-red-200'>এরর: " . mysqli_error($this->db->link) . "</div>";
     }
 }
 
@@ -172,23 +174,60 @@ public function getUserExamHistory($userId) {
     return $result;
 }
 
-  public function getLeaderboardByCategory($category_id) {
-		$category_id = mysqli_real_escape_string($this->db->link, $category_id);
+ public function getLeaderboardByCategory($category_id) {
+    $category_id = mysqli_real_escape_string($this->db->link, $category_id);
 
-		// প্রতিটি ইউজারের মোট পয়েন্ট এবং সঠিক উত্তরের সংখ্যা গণনা করার কোয়েরি
-		$query = "SELECT tbl_user.name, tbl_user.email, 
-						SUM(tbl_score.score) as total_score, 
-						COUNT(tbl_score.id) as total_attempt 
-				FROM tbl_score 
-				INNER JOIN tbl_user ON tbl_score.userId = tbl_user.userId 
-				WHERE tbl_score.category_id = '$category_id' 
-				GROUP BY tbl_score.userId 
-				ORDER BY total_score DESC, total_attempt ASC 
-				LIMIT 10";
+    // tbl_score এর বদলে tbl_exam_history টেবিল ব্যবহার করা হলো
+    // যেখানে user_id দিয়ে join হচ্ছে এবং total_marks ও attempt গুণ করা হচ্ছে
+    $query = "SELECT u.name, u.email, 
+                    SUM(h.total_marks) as total_score, 
+                    COUNT(h.id) as total_attempt 
+             FROM tbl_exam_history h 
+             INNER JOIN tbl_user u ON h.user_id = u.userId 
+             WHERE h.category_id = '$category_id' 
+             GROUP BY h.user_id 
+             ORDER BY total_score DESC, total_attempt ASC 
+             LIMIT 10";
 
-		$result = $this->db->select($query);
-		return $result;
-	}
+    $result = $this->db->select($query);
+    return $result;
+}
+
+// ক্যাটাগরি, সাবজেক্ট এবং সমান সংখ্যক পরীক্ষা সম্পন্নকারীদের লিডারবোর্ড
+public function getFilteredLeaderboard($category_id, $subject_id = 0, $attempts_limit = 0) {
+    $category_id    = (int)$category_id;
+    $subject_id     = (int)$subject_id;
+    $attempts_limit = (int)$attempts_limit;
+
+    $conditions = ["h.category_id = '$category_id'"];
+    
+    // সাবজেক্ট ফিল্টার
+    if ($subject_id > 0) {
+        $conditions[] = "h.subject_id = '$subject_id'";
+    }
+
+    $whereClause = "WHERE " . implode(" AND ", $conditions);
+
+    // সমান সংখ্যক পরীক্ষা ফিল্টার (HAVING clause)
+    $havingClause = "";
+    if ($attempts_limit > 0) {
+        $havingClause = "HAVING total_attempt = '$attempts_limit'";
+    }
+
+    $query = "SELECT u.userId, u.name, u.email, 
+                     SUM(h.total_marks) as total_score, 
+                     COUNT(h.id) as total_attempt,
+                     AVG(h.percentage) as avg_percentage
+              FROM tbl_exam_history h 
+              INNER JOIN tbl_user u ON h.user_id = u.userId 
+              $whereClause 
+              GROUP BY h.user_id 
+              $havingClause
+              ORDER BY total_score DESC, avg_percentage DESC 
+              LIMIT 20";
+
+    return $this->db->select($query);
+}
 
   public function setupCustomExam($category_id, $num_questions, $time_limit, $subject_id = 0) {
     $category_id   = (int)$category_id;

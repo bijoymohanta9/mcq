@@ -1,17 +1,35 @@
 <?php 
-    $filepath = realpath(dirname(__FILE__));
-    include_once ($filepath.'/inc/header.php');
-    include_once ($filepath.'/../classes/Exam.php');
-    $exm = new Exam();
-?>
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 
-<?php 
+    // Class file include
+    include_once '../classes/Exam.php';
+    $exm = new Exam();
+
+    // ১. POST Request Handle & PRG Redirect
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $addQue = $exm->addQuestions($_POST);
+        $_SESSION['msg'] = $addQue; // মেসেজ সেশনে সংরক্ষণ
+        
+        // রিফ্রেশ জনিত ডুপ্লিকেট এড়াতে পেজ রিডাইরেক্ট
+        header("Location: quesadd.php");
+        exit();
     }
-    // Get Total Questions Count
+
+    // ২. Header লোড (সরাসরি লিঙ্ক)
+    include_once 'inc/header.php';
+
+    // ৩. ডায়নামিক প্রশ্ন নম্বর নির্ধারণ
     $total = $exm->getTotalRows();
-    $next = $total + 1;
+    $next  = $total ? ($total + 1) : 1;
+
+    // ৪. সেশন থেকে মেসেজ রিড করা এবং সেশন খালি করা
+    $msg = '';
+    if (isset($_SESSION['msg'])) {
+        $msg = $_SESSION['msg'];
+        unset($_SESSION['msg']);
+    }
 ?>
 
 <div class="w-full max-w-4xl mx-auto my-8 px-4">
@@ -19,20 +37,19 @@
     <!-- Page Header -->
     <div class="mb-6">
         <h1 class="text-2xl font-black text-slate-800 tracking-tight">নতুন প্রশ্ন যুক্ত করুন</h1>
-        <p class="text-slate-500 text-xs mt-1">পরীক্ষার বিভাগ, বিষয় ও বিকল্প নির্বাচন করে ডাটাবেজে প্রশ্ন এন্ট্রি দিন</p>
+        <p class="text-slate-500 text-xs mt-1">পরীক্ষার বিভাগ, বিষয় ও বিকল্প নির্বাচন করে ডাটাবেজে প্রশ্ন এন্ট্রি দিন</p>
     </div>
 
     <!-- Alert Messages -->
-    <?php if (isset($addQue)): ?>
-        <div class="mb-6 p-4 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-semibold flex items-center gap-2 shadow-sm">
-            <i class="fa-solid fa-circle-info text-indigo-600 text-base"></i>
-            <div><?php echo $addQue; ?></div>
+    <?php if (!empty($msg)): ?>
+        <div class="mb-6">
+            <?php echo $msg; ?>
         </div>
     <?php endif; ?>
 
     <!-- Form Card -->
     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
-        <form action="" method="post" class="space-y-6">
+        <form action="quesadd.php" method="post" class="space-y-6">
             
             <!-- Category, Subject & Question No. (Grid Layout) -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -66,11 +83,11 @@
                 <!-- Subject (From Database) -->
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                        বিষয় (Subject) <span class="text-rose-500">*</span>
+                        বিষয় (Subject) <span class="text-rose-500">*</span>
                     </label>
                     <div class="relative">
                         <select name="subject_id" required class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-3.5 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition appearance-none">
-                            <option value="">-- বিষয় সিলেক্ট করুন --</option>
+                            <option value="">-- বিষয় সিলেক্ট করুন --</option>
                             <?php 
                                 $query = "SELECT * FROM tbl_subject ORDER BY subject_name ASC";
                                 $getSubs = $db->select($query);
@@ -94,7 +111,7 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         প্রশ্ন নম্বর (Question No)
                     </label>
-                    <input type="number" name="quesNo" value="<?php echo isset($next) ? $next : ''; ?>" readonly class="w-full bg-slate-100 border border-slate-200 text-slate-500 text-xs font-bold rounded-xl px-3.5 py-3 cursor-not-allowed outline-none">
+                    <input type="number" name="quesNo" value="<?php echo $next; ?>" readonly class="w-full bg-slate-100 border border-slate-200 text-slate-500 text-xs font-bold rounded-xl px-3.5 py-3 cursor-not-allowed outline-none">
                 </div>
             </div>
 
@@ -117,12 +134,12 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">অপশন ২ (Choice Two)</label>
-                    <input type="text" name="ans2" placeholder="দ্বিতীয় বিকল্প..." required class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                    <input type="text" name="ans2" placeholder="দ্বিতীয় বিকল্প..." required class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">অপশন ৩ (Choice Three)</label>
-                    <input type="text" name="ans3" placeholder="তৃতীয় বিকল্প..." required class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                    <input type="text" name="ans3" placeholder="তৃতীয় বিকল্প..." required class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                 </div>
 
                 <div>

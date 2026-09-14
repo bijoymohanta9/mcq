@@ -92,6 +92,10 @@
                         <a href="subscription.php" class="px-3.5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-sm flex items-center gap-1.5">
                             <i class="fa-solid fa-cart-shopping"></i> Buy Plan
                         </a>
+
+                        <a href="leaderboard.php" class="px-3.5 py-2 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl transition shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-trophy"></i> Leaderboard
+                        </a>
                         
                         <a href="?action=logout" class="px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition flex items-center gap-1.5">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
