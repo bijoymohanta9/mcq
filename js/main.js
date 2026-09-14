@@ -1,57 +1,71 @@
 $(function() {
-	// For user Registration
-	$("#regsubmit").click(function(){
 
-		var name      = $("#name").val();
-		var username  = $("#username").val();
-		var password  = $("#password").val();
-		var email     = $("#email").val();
-		var dataString = 'name='+name+'&username='+username+'&password='+password+'&email='+email;
+    // 1. User Registration
+    $("#signupSubmit").click(function(e){
+        e.preventDefault();
 
-		$.ajax({
-			type:"POST",
-			url:"getregister.php",
-			data:dataString,
-			success:function(data){
-				$("#state").html(data);
-			}
-		});
-		return false;
-	});
+        var name     = $("#name").val();
+        var username = $("#username").val();
+        var password = $("#password").val();
+        var email    = $("#email").val();
+
+        $.ajax({
+            type: "POST",
+            url: "getregister.php",
+            data: {
+                name: name,
+                username: username,
+                password: password,
+                email: email
+            },
+            success: function(data){
+                $(".msg").html(data);
+            }
+        });
+    });
 
 
-		// For user Login
-	$("#loginsubmit").click(function(){
-		var email     = $("#email").val();
-		var password  = $("#password").val();
-		var dataString = 'email='+email+'&password='+password;
+    // 2. User Login
+    $("#loginsubmit").click(function(e){
+        e.preventDefault();
 
-		$.ajax({
-			type:"POST",
-			url:"getlogin.php",
-			data:dataString,
-			success:function(data){
-				if ($.trim(data) == "empty") {
-					$(".empty").show();
-					setTimeout(function(){
-					$(".empty").fadeOut();
-					},4000);
-				}else if($.trim(data) == "disable") {
-					$(".disable").show();
-					setTimeout(function(){
-					$(".disable").fadeOut();
-					},4000);
-					
-				}else if($.trim(data) == "error"){
-					$(".error").show();
-					setTimeout(function(){
-					$(".error").fadeOut();
-					},4000);
-				}else{
-					window.location = "exam.php";
-				}
-			}
-		});
-		return false;
-	});
+		console.log("Login button clicked!"); // Check if this appears in DevTools Console
+
+        var email    = $("#email").val();
+        var password = $("#password").val();
+        
+        $.ajax({
+            type: "POST",
+            url: "getlogin.php",
+            data: {
+                email: email, 
+                password: password
+            },
+            success: function(response){
+                var res = response.trim();
+				console.log("Exact Response:", res);
+
+                if(res == "empty"){
+                    $(".empty").show();
+                    $(".error").hide();
+                    $(".disable").hide();
+                } else if(res == "error"){
+                    $(".error").show();
+                    $(".empty").hide();
+                    $(".disable").hide();
+                } else if(res == "disable"){
+                    $(".disable").show();
+                    $(".empty").hide();
+                    $(".error").hide();
+                } else if(res == "success_exam"){
+                    // অ্যাক্টিভ সাবস্ক্রিপশন থাকলে এক্সামে নিয়ে যাবে
+                    window.location = "exam.php";
+                } else if(res == "success_subscription"){
+                    // সাবস্ক্রিপশন না থাকলে প্ল্যান কেনার পেজে নিয়ে যাবে
+                    window.location = "subscription.php";
+                }
+            }
+        });
+    });
+    
 });

@@ -1,0 +1,194 @@
+<?php include 'inc/header.php'; ?>
+<?php
+// ইউজার লগইন না থাকলে লগইন পেজে রিডাইরেক্ট হবে
+Session::checkSession();
+?>
+
+<div class="w-full max-w-5xl mx-auto my-6 px-4">
+    
+    <!-- Page Header & Instructions -->
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-slate-900 tracking-tight">পরীক্ষা ও সাবস্ক্রিপশন প্ল্যান নির্বাচন করুন</h2>
+        <p class="text-slate-600 text-sm mt-2 max-w-xl mx-auto">
+            আপনার কাঙ্ক্ষিত পরীক্ষার কোর্সটি বেছে নিন এবং মেয়াদ সিলেক্ট করে সাবস্ক্রিপশন সম্পন্ন করুন। পেমেন্ট সম্পন্ন হওয়ার সাথে সাথেই সকল মডেল টেস্ট একটিভ হয়ে যাবে।
+        </p>
+    </div>
+
+    <form id="subscriptionForm" class="space-y-8">
+        
+        <!-- Step 1: Select Exam Category -->
+        <div>
+            <div class="flex items-center space-x-2 mb-4">
+                <span class="w-7 h-7 bg-indigo-600 text-white font-bold rounded-full flex items-center justify-center text-sm">১</span>
+                <h3 class="text-lg font-bold text-slate-800">পরীক্ষা বা সার্কুলার নির্বাচন করুন</h3>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-5">
+                
+                <!-- 1. BCS Preliminary Exam -->
+                <label class="relative cursor-pointer group">
+                    <input type="radio" name="exam_type" value="bcs" class="peer sr-only" required checked>
+                    <div class="p-6 bg-white border-2 border-slate-200 rounded-2xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-md transition-all h-full flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-4 text-xl group-hover:bg-indigo-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-book-bookmark"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-lg mb-1">বিসিএস প্রিলিমিনারি</h4>
+                            <p class="text-slate-500 text-xs leading-relaxed">বিসিএস প্রিলির সিলেবাস অনুযায়ী বিষয়ভিত্তিক ও পূর্ণাঙ্গ মডেল টেস্ট।</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between text-xs text-indigo-600 font-semibold">
+                            <span>বিষয়ভিত্তিক পরীক্ষা</span>
+                            <i class="fa-solid fa-circle-check text-indigo-600 text-lg"></i>
+                        </div>
+                    </div>
+                </label>
+
+                <!-- 2. Bank Job Exam -->
+                <label class="relative cursor-pointer group">
+                    <input type="radio" name="exam_type" value="bank" class="peer sr-only">
+                    <div class="p-6 bg-white border-2 border-slate-200 rounded-2xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-md transition-all h-full flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 text-xl group-hover:bg-emerald-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-building-columns"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-lg mb-1">ব্যাংক জব নিয়োগ পরীক্ষা</h4>
+                            <p class="text-slate-500 text-xs leading-relaxed">সরকারি ও বেসরকারি সকল ব্যাংকের প্রিলি এবং স্পেশাল মডেল টেস্ট।</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between text-xs text-emerald-600 font-semibold">
+                            <span>ব্যাংক ম্যাথ ও প্রশ্ন ব্যাংক</span>
+                            <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+                        </div>
+                    </div>
+                </label>
+
+                <!-- 3. NTRCA Exam -->
+                <label class="relative cursor-pointer group">
+                    <input type="radio" name="exam_type" value="ntrca" class="peer sr-only">
+                    <div class="p-6 bg-white border-2 border-slate-200 rounded-2xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-md transition-all h-full flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mb-4 text-xl group-hover:bg-amber-600 group-hover:text-white transition">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-lg mb-1">এনটিআরসিএ (NTRCA)</h4>
+                            <p class="text-slate-500 text-xs leading-relaxed">স্কুল, কলেজ ও মাদ্রাসা শিক্ষক নিবন্ধন প্রিলিমিনারি পরীক্ষা।</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between text-xs text-amber-600 font-semibold">
+                            <span>শিক্ষক নিবন্ধন স্পেশাল</span>
+                            <i class="fa-solid fa-circle-check text-amber-600 text-lg"></i>
+                        </div>
+                    </div>
+                </label>
+
+            </div>
+        </div>
+
+        <!-- Step 2: Select Duration & View Price -->
+        <div>
+            <div class="flex items-center space-x-2 mb-4">
+                <span class="w-7 h-7 bg-indigo-600 text-white font-bold rounded-full flex items-center justify-center text-sm">২</span>
+                <h3 class="text-lg font-bold text-slate-800">সাবস্ক্রিপশনের মেয়াদ সিলেক্ট করুন</h3>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-5">
+                
+                <!-- 3 Months -->
+                <label class="relative cursor-pointer">
+                    <input type="radio" name="duration" value="3_months" data-price="500" class="peer sr-only duration-radio" required>
+                    <div class="p-5 bg-white border border-slate-200 rounded-xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/20 peer-checked:ring-2 peer-checked:ring-indigo-600 transition text-center">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">ট্রায়াল প্যাক</span>
+                        <h5 class="text-xl font-bold text-slate-800">৩ মাস</h5>
+                        <p class="text-2xl font-black text-indigo-600 my-2">৳ ৫০০</p>
+                        <span class="text-xs text-slate-400">প্রতি মাসে ৳ ১৬৬</span>
+                    </div>
+                </label>
+
+                <!-- 6 Months -->
+                <label class="relative cursor-pointer">
+                    <input type="radio" name="duration" value="6_months" data-price="900" class="peer sr-only duration-radio" checked>
+                    <div class="p-5 bg-white border border-slate-200 rounded-xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/20 peer-checked:ring-2 peer-checked:ring-indigo-600 transition text-center relative overflow-hidden">
+                        <span class="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">পপুলার</span>
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">স্ট্যান্ডার্ড</span>
+                        <h5 class="text-xl font-bold text-slate-800">৬ মাস</h5>
+                        <p class="text-2xl font-black text-indigo-600 my-2">৳ ৯০০</p>
+                        <span class="text-xs text-slate-400">প্রতি মাসে ৳ ১৫০</span>
+                    </div>
+                </label>
+
+                <!-- 1 Year -->
+                <label class="relative cursor-pointer">
+                    <input type="radio" name="duration" value="1_year" data-price="1500" class="peer sr-only duration-radio">
+                    <div class="p-5 bg-white border border-slate-200 rounded-xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/20 peer-checked:ring-2 peer-checked:ring-indigo-600 transition text-center relative overflow-hidden">
+                        <span class="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">সেরা ছাড়</span>
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">প্রিমিয়াম প্যাক</span>
+                        <h5 class="text-xl font-bold text-slate-800">১ বছর (১২ মাস)</h5>
+                        <p class="text-2xl font-black text-indigo-600 my-2">৳ ১,৫০০</p>
+                        <span class="text-xs text-slate-400">প্রতি মাসে ৳ ১২৫</span>
+                    </div>
+                </label>
+
+            </div>
+        </div>
+
+        <!-- Billing Summary & Submit Section -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="space-y-1 text-center md:text-left">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">মোট পরিশোধযোগ্য বিল</span>
+                <div class="text-3xl font-black text-slate-900 flex items-center justify-center md:justify-start gap-1">
+                    <span>৳</span> <span id="totalAmount">৯০০</span> <span class="text-xs font-normal text-slate-500">(সকল ট্যাক্স সহ)</span>
+                </div>
+            </div>
+
+            <!-- ID added: payButton -->
+            <button type="submit" id="payButton" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center space-x-2 text-base">
+                <span>পেমেন্ট করুন</span>
+                <i class="fa-solid fa-arrow-right text-sm"></i>
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<!-- Auto Price Calculation & Dynamic AJAX Script -->
+<script>
+    $(document).ready(function() {
+        // ১. রেডিও বাটন সিলেক্ট পরিবর্তন হলে ইউআই-এর মোট টাকা আপডেট হবে
+        $('.duration-radio').change(function() {
+            var price = $(this).data('price');
+            $('#totalAmount').text(price);
+        });
+
+        // ২. ফর্ম সাবমিট হ্যান্ডলার (ডায়নামিক ভ্যালু পিক করবে)
+        $("#subscriptionForm").submit(function(e){
+            e.preventDefault();
+
+            // ইউজার কি সিলেক্ট করেছে তা ডায়নামিকালি রিড করা
+            var selectedExam = $("input[name='exam_type']:checked").val();
+            var selectedPlan = $("input[name='duration']:checked").val();
+            var amount = $("input[name='duration']:checked").data('price');
+
+            $.ajax({
+                type: "POST",
+                url: "process_subscription.php",
+                data: {
+                    exam_type: selectedExam,
+                    plan: selectedPlan,
+                    amount: amount
+                },
+                success: function(response){
+                    var res = $.trim(response);
+                    if(res == "success"){
+                        window.location = "exam.php";
+                    } else {
+                        alert("পেমেন্ট প্রক্রিয়াকরণে সমস্যা হয়েছে: " + res);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert("Server Error: " + error);
+                }
+            });
+        });
+    });
+</script>
+
+<?php include 'inc/footer.php'; ?>

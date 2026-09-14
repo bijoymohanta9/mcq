@@ -1,13 +1,16 @@
 <?php
 $filepath = realpath(dirname(__FILE__));
 include_once ($filepath.'/classes/User.php');
+
 $usr = new User();
 
-//there have no need if condition because we are passing values using ajaz
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-	$email = $_POST['email'];
-	$password = $_POST['password'];
-	$userlogin = $usr->userLogin($email,$password);
+    $email    = $_POST['email'];
+    $password = $_POST['password'];
 
+    $userlogin = $usr->userLogin($email, $password);
+
+    // echo করা অত্যন্ত জরুরি, যাতে AJAX এটি গ্রহণ করতে পারে
+    echo trim($userlogin);
 }
 ?>
