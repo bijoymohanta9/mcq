@@ -12,69 +12,104 @@ class Exam{
 		$this->fm = new Format();
 	}
 
-  public function addQuestions($data){
-    $quesNo = mysqli_real_escape_string($this->db->link,$data['quesNo']);
-    $ques = mysqli_real_escape_string($this->db->link,$data['ques']);
+  public function addQuestions($data) {
+    $quesNo      = mysqli_real_escape_string($this->db->link, $data['quesNo']);
+    $category_id = mysqli_real_escape_string($this->db->link, $data['category_id']);
+    $subject_id  = mysqli_real_escape_string($this->db->link, $data['subject_id']);
+    $ques        = mysqli_real_escape_string($this->db->link, $data['ques']);
+    
     $ans = array();
-    $ans[1] = $data['ans1'];
-    $ans[2] = $data['ans2'];
-    $ans[3] = $data['ans3'];
-    $ans[4] = $data['ans4'];
-    $rightAns = $data['rightAns'];
-    $query = "INSERT INTO tbl_ques(quesNo,ques) VALUES('$quesNo','$ques')";
-    $inserted_row = $this->db->insert($query);
-    if ($inserted_row) {
-      foreach ($ans as $key => $ansName) {
-        if ($ansName != '') {
-         if ($rightAns == $key) {
-           $rquery = "INSERT INTO tbl_ans(quesNo,rightAns,ans) VALUES('$quesNo','1','$ansName')";
+    $ans[1] = mysqli_real_escape_string($this->db->link, $data['ans1']);
+    $ans[2] = mysqli_real_escape_string($this->db->link, $data['ans2']);
+    $ans[3] = mysqli_real_escape_string($this->db->link, $data['ans3']);
+    $ans[4] = mysqli_real_escape_string($this->db->link, $data['ans4']);
+    $rightAns = mysqli_real_escape_string($this->db->link, $data['rightAns']);
 
-         }else{
-          $rquery = "INSERT INTO tbl_ans(quesNo,rightAns,ans) VALUES('$quesNo','0','$ansName')";
-         }
-         $insertrow = $this->db->insert($rquery);
-         if ($insertrow) {
-           continue;
-         }else{
-          die('Error....');
-         }
+    // ১. খালি ফিল্ড চেক
+    if (empty($quesNo) || empty($category_id) || empty($subject_id) || empty($ques) || empty($ans[1]) || empty($ans[2]) || empty($ans[3]) || empty($ans[4]) || empty($rightAns)) {
+        $msg = "<span class='text-rose-600 font-semibold'>সবগুলো ফিল্ড অবশ্যই পূরণ করতে হবে!</span>";
+        return $msg;
+    } 
 
+    // ২. tbl_ques টেবিলে মূল প্রশ্নটি মাত্র ১ বার Insert করা
+    $query = "INSERT INTO tbl_ques(quesNo, category_id, subject_id, ques) 
+              VALUES('$quesNo', '$category_id', '$subject_id', '$ques')";
+    $insert_row = $this->db->insert($query);
+
+    if ($insert_row) {
+        // ৩. Loop চালিয়ে tbl_ans টেবিলে ৪টি অপশন আলাদাভাবে Insert করা
+        foreach ($ans as $key => $ansName) {
+            if ($ansName != '') {
+                $isRight = ($rightAns == $key) ? '1' : '0';
+                
+                $rquery = "INSERT INTO tbl_ans(quesNo, rightAns, ans) 
+                           VALUES('$quesNo', '$isRight', '$ansName')";
+                $this->db->insert($rquery);
+            }
         }
-      }
-     $msg = "<span class='success'>Question Added Successfully...</span>";
-     return $msg;
-
+        $msg = "<span class='text-emerald-600 font-semibold'>প্রশ্ন ও ৪টি অপশন সফলভাবে সেভ হয়েছে!</span>";
+        return $msg;
+    } else {
+        $msg = "<span class='text-rose-600 font-semibold'>ডাটা সেভ করতে সমস্যা হয়েছে!</span>";
+        return $msg;
     }
   }
 
-  public function getQueByOrder(){
-    $query = "SELECT * FROM  tbl_ques ORDER BY quesNo ASC";
-    $result = $this->db->select($query);
-    return $result;
+  // সফট ডিলিট করার জন্য (DELETE কোয়েরির বদলে UPDATE কোয়েরি)
+public function delQuestion($quesno) {
+    $quesno = mysqli_real_escape_string($this->db->link, $quesno);
+    
+    $query = "UPDATE tbl_ques SET isDeleted = 1 WHERE quesNo = '$quesno'";
+    $updated_row = $this->db->update($query);
+    
+    if ($updated_row) {
+        $msg = "<div class='p-3 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold mb-4'>প্রশ্নটি সফলভাবে রিমুভ করা হয়েছে!</div>";
+        return $msg;
+    } else {
+        $msg = "<div class='p-3 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold mb-4'>ত্রুটি! প্রশ্নটি রিমুভ করা যায়নি।</div>";
+        return $msg;
+    }
   }
 
-  public function delQuestion($quesNo){
-
-$tables = array("tbl_ques","tbl_ans");
-foreach ($tables as $table) {
-  $delquery = "DELETE FROM $table WHERE quesNo ='$quesNo'";
-  $deldata = $this->db->delete($delquery);
-}
-if ($deldata) {
-  $msg = "<span class='success'>Data Deleted Successfully...</span>";
-                  return $msg;
-}else{
-  $msg = "<span class='error'>Data Not Deleted !</span>";
-                  return $msg;
-}
-
+  // ১. শুধুমাত্র একটিভ (isDeleted = 0) প্রশ্নগুলো নিয়ে আসার জন্য
+  public function getQueByOrder() {
+      $query = "SELECT tbl_ques.*, tbl_category.category_name, tbl_subject.subject_name 
+                FROM tbl_ques 
+                LEFT JOIN tbl_category ON tbl_ques.category_id = tbl_category.id 
+                LEFT JOIN tbl_subject ON tbl_ques.subject_id = tbl_subject.id 
+                WHERE tbl_ques.isDeleted = 0 
+                ORDER BY tbl_ques.quesNo ASC";
+      $result = $this->db->select($query);
+      return $result;
   }
 
-  public function getTotalRows(){
+  public function getLeaderboardByCategory($category_id) {
+		$category_id = mysqli_real_escape_string($this->db->link, $category_id);
+
+		// প্রতিটি ইউজারের মোট পয়েন্ট এবং সঠিক উত্তরের সংখ্যা গণনা করার কোয়েরি
+		$query = "SELECT tbl_user.name, tbl_user.email, 
+						SUM(tbl_score.score) as total_score, 
+						COUNT(tbl_score.id) as total_attempt 
+				FROM tbl_score 
+				INNER JOIN tbl_user ON tbl_score.userId = tbl_user.userId 
+				WHERE tbl_score.category_id = '$category_id' 
+				GROUP BY tbl_score.userId 
+				ORDER BY total_score DESC, total_attempt ASC 
+				LIMIT 10";
+
+		$result = $this->db->select($query);
+		return $result;
+	}
+
+  public function getTotalRows() {
     $query = "SELECT * FROM tbl_ques";
     $getResult = $this->db->select($query);
-    $total = $getResult->num_rows;
-    return $total;
+    if ($getResult) {
+        $total = $getResult->num_rows;
+        return $total;
+    } else {
+        return 0;
+    }
   }
 
   public function getQuestion(){
