@@ -2,100 +2,80 @@
 include 'inc/header.php';
 Session::checkSession();
 
-$userId = Session::get("userid");
+$userId = Session::get("userid") ? Session::get("userid") : Session::get("userId");
 
-// JOIN Query দিয়ে ক্যাটাগরির নামসহ সাবস্ক্রিপশন ডাটা ফ্রেচ
+if (!isset($db)) {
+    $db = new Database();
+}
+
+// ইউজারের সবকটি অ্যাক্টিভ/এপ্রুভড সাবস্ক্রিপশন নিয়ে আসার জন্য (LIMIT 1 সরিয়ে দেওয়া হয়েছে)
 $subQuery = "SELECT s.*, c.category_name 
              FROM tbl_subscription s 
              LEFT JOIN tbl_category c ON s.category_id = c.id 
              WHERE s.user_id = '$userId' 
-             AND s.status = 'active' 
+             AND LOWER(s.status) = 'approved' 
              AND s.expire_date >= NOW() 
-             ORDER BY s.id DESC LIMIT 1";
+             ORDER BY s.id DESC";
 
 $subData = $db->select($subQuery);
 
-if (!$subData) {
+// কোনো অ্যাক্টিভ সাবস্ক্রিপশন না থাকলে সাবস্ক্রিপশন কিনতে পাঠাবে
+if (!$subData || $subData->num_rows == 0) {
     header("Location: subscription.php");
     exit();
 }
-
-$subInfo = $subData->fetch_assoc();
 ?>
 
-<div class="w-full max-w-4xl mx-auto my-10 px-4">
+<div class="w-full max-w-5xl mx-auto my-10 px-4">
 
-    <!-- Welcome Banner -->
-    <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-3xl p-8 text-white shadow-xl mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+    <!-- Header Section -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <span class="inline-block px-3 py-1 bg-white/20 text-white rounded-full text-xs font-semibold uppercase tracking-wider mb-3">
-                অনলাইন পরীক্ষা পোর্টালে স্বাগতম
-            </span>
-            <h2 class="text-3xl font-extrabold">আপনার মডেল টেস্ট শুরু করতে প্রস্তুত?</h2>
-            <p class="text-indigo-100 text-sm mt-2 max-w-md">
-                নিচে আপনার সাবস্ক্রিপশন প্ল্যানের বিবরণ দেখতে পাচ্ছেন। এখনই পরীক্ষা শুরু করুন এবং আপনার প্রস্তুতি যাচাই করুন।
-            </p>
+            <h2 class="text-2xl font-bold text-slate-800">আমার অ্যাক্টিভ পরীক্ষাসমূহ</h2>
+            <p class="text-xs text-slate-500 mt-1">আপনার কেনা সাবস্ক্রিপশন অনুযায়ী নিচে পরীক্ষা দিন</p>
         </div>
-        <a href="starttest.php" class="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold px-7 py-4 rounded-2xl shadow-lg hover:bg-indigo-50 hover:shadow-xl transition-all whitespace-nowrap text-base">
-            <span>পরীক্ষা শুরু করুন</span>
-            <i class="fa-solid fa-arrow-right"></i>
+        <a href="subscription.php" class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+            <i class="fa-solid fa-plus"></i> নতুন কোর্স যোগ করুন
         </a>
     </div>
 
-    <!-- Active Subscription Details Card -->
-    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-lg">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
+    <!-- Subscriptions Exam Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <?php 
+            while ($subInfo = $subData->fetch_assoc()) {
+                $catName = !empty($subInfo['category_name']) ? $subInfo['category_name'] : ($subInfo['exam_type'] ?? 'সাধারণ পরীক্ষা');
+        ?>
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
                 <div>
-                    <h3 class="font-bold text-slate-800 text-base">অ্যাক্টিভ সাবস্ক্রিপশন</h3>
-                    <p class="text-xs text-slate-500">আপনার বর্তমান প্যাকেজের মেয়াদ ও বিবরণ</p>
+                    <!-- Top Badge -->
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="bg-indigo-50 text-indigo-600 text-[11px] font-bold px-3 py-1 rounded-lg border border-indigo-100">
+                            <?php echo htmlspecialchars($subInfo['duration'] ?? 'Standard'); ?>
+                        </span>
+                        <span class="bg-emerald-100 text-emerald-700 font-semibold text-xs px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            একটিভ
+                        </span>
+                    </div>
+
+                    <!-- Exam Title -->
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">
+                        <?php echo htmlspecialchars($catName); ?>
+                    </h3>
+                    
+                    <!-- Expiry Date -->
+                    <p class="text-xs text-slate-500 mb-6">
+                        মেয়াদ শেষ: <span class="font-semibold text-slate-700"><?php echo date('d M Y', strtotime($subInfo['expire_date'])); ?></span>
+                    </p>
                 </div>
-            </div>
-            <span class="bg-emerald-100 text-emerald-700 font-semibold text-xs px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                একটিভ
-            </span>
-        </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center md:text-left">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="text-[11px] text-slate-400 font-medium block uppercase">কোর্স/পরীক্ষা</span>
-                <span class="font-bold text-slate-800 text-sm">
-                    <?php 
-                        // ডাইনামিক ক্যাটাগরি নেম প্রদর্শন
-                        echo !empty($subInfo['category_name']) ? htmlspecialchars($subInfo['category_name']) : 'সাধারণ পরীক্ষা'; 
-                    ?>
-                </span>
+                <!-- Start Exam Button with Category ID -->
+                <a href="starttest.php?cat_id=<?php echo $subInfo['category_id']; ?>" class="w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition flex items-center justify-center gap-2 text-sm">
+                    <span>পরীক্ষা শুরু করুন</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
             </div>
-
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="text-[11px] text-slate-400 font-medium block uppercase">প্যাকেজ</span>
-                <span class="font-bold text-slate-800 text-sm">
-                    <?php 
-                        $planMap = [
-                            '3_months' => '৩ মাস (ট্রায়াল)',
-                            '6_months' => '৬ মাস (স্ট্যান্ডার্ড)',
-                            '1_year'   => '১ বছর (প্রিমিয়াম)'
-                        ];
-                        $dur = $subInfo['duration'];
-                        echo isset($planMap[$dur]) ? $planMap[$dur] : str_replace('_', ' ', htmlspecialchars($dur)); 
-                    ?>
-                </span>
-            </div>
-
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="text-[11px] text-slate-400 font-medium block uppercase">শুরুর তারিখ</span>
-                <span class="font-semibold text-slate-700 text-xs"><?php echo date('d M Y', strtotime($subInfo['start_date'])); ?></span>
-            </div>
-
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="text-[11px] text-slate-400 font-medium block uppercase">মেয়াদ শেষ</span>
-                <span class="font-semibold text-indigo-600 text-xs"><?php echo date('d M Y', strtotime($subInfo['expire_date'])); ?></span>
-            </div>
-        </div>
+        <?php } ?>
     </div>
 
 </div>

@@ -155,18 +155,21 @@ public function delQuestion($quesno) {
       return $result;
   }
 
- public function getUserExamHistory($userId) {
-    $userId = $this->fm->validation($userId);
+public function getUserExamHistory($userId) {
     $userId = mysqli_real_escape_string($this->db->link, $userId);
-
-    $query = "SELECT h.*, c.category_name, s.subject_name 
+    
+    // LEFT JOIN দিয়ে Category ও Subject এর আসল নাম তুলে আনা
+    $query = "SELECT h.*, 
+                     c.category_name, 
+                     s.subject_name 
               FROM tbl_exam_history h 
               LEFT JOIN tbl_category c ON h.category_id = c.id 
-              LEFT JOIN tbl_subject s ON h.subject_id = s.id
+              LEFT JOIN tbl_subject s ON h.subject_id = s.id 
               WHERE h.user_id = '$userId' 
               ORDER BY h.id DESC";
               
-    return $this->db->select($query);
+    $result = $this->db->select($query);
+    return $result;
 }
 
   public function getLeaderboardByCategory($category_id) {
@@ -187,17 +190,24 @@ public function delQuestion($quesno) {
 		return $result;
 	}
 
-  public function setupCustomExam($category_id, $num_questions, $time_limit) {
+  public function setupCustomExam($category_id, $num_questions, $time_limit, $subject_id = 0) {
     $category_id   = (int)$category_id;
+    $subject_id    = (int)$subject_id;
     $num_questions = (int)$num_questions;
     $time_limit    = (int)$time_limit;
 
-    // ১. ক্যাটাগরি অনুসারে ক্যোয়ারী তৈরি
+    // ফিল্টারিং ক্যোয়ারী
+    $conditions = ["isDeleted = 0"];
+
     if ($category_id > 0) {
-        $query = "SELECT quesNo FROM tbl_ques WHERE category_id = '$category_id' AND isDeleted = 0 ORDER BY RAND() LIMIT $num_questions";
-    } else {
-        $query = "SELECT quesNo FROM tbl_ques WHERE isDeleted = 0 ORDER BY RAND() LIMIT $num_questions";
+        $conditions[] = "category_id = '$category_id'";
     }
+    if ($subject_id > 0) {
+        $conditions[] = "subject_id = '$subject_id'";
+    }
+
+    $whereClause = implode(" AND ", $conditions);
+    $query = "SELECT quesNo FROM tbl_ques WHERE $whereClause ORDER BY RAND() LIMIT $num_questions";
 
     $result = $this->db->select($query);
 
@@ -208,17 +218,63 @@ public function delQuestion($quesno) {
         }
     }
 
-    // ২. পরীক্ষার সেশন ডাটা সেট করা
+    // সেশন ডাটা সেট
     Session::set("exam_questions", $examQuestions);
-    Session::set("exam_total_ques", count($examQuestions)); // সঠিক মোট প্রশ্ন সংখ্যা
+    Session::set("exam_total_ques", count($examQuestions));
     Session::set("exam_time_limit", $time_limit);
-    Session::set("exam_category_id", $category_id); // পরবর্তীতে হিস্ট্রিতে সেভ করার জন্য
+    Session::set("exam_category_id", $category_id);
+    Session::set("exam_subject_id", $subject_id);
     Session::set("exam_start_time", time());
     
-    // স্কোর ও ট্র্যাকিং সেশন রিসেট
     Session::set("score", 0);
     Session::set("correct_ans", 0);
     Session::set("wrong_ans", 0);
+}
+
+public function getQuestionByNumber($quesNo) {
+    $quesNo = (int)$quesNo;
+    $query = "SELECT * FROM tbl_ques WHERE quesNo = '$quesNo' AND isDeleted = 0";
+    $result = $this->db->select($query);
+    if ($result) {
+        return $result->fetch_assoc();
+    }
+    return false;
+}
+
+// প্রশ্নের উত্তর (Options) ফেচ করার মেথড
+public function getAnswers($quesNo) {
+    $quesNo = (int)$quesNo;
+    $query = "SELECT * FROM tbl_ans WHERE quesNo = '$quesNo'";
+    $result = $this->db->select($query);
+    return $result;
+}
+
+// ইউজার সাবমিট করা উত্তর প্রসেস ও রেজাল্ট ক্যালকুলেট করার মেথড
+public function processAnswer($quesNo, $selectedAns) {
+    $quesNo      = (int)$quesNo;
+    $selectedAns = (int)$selectedAns;
+
+    // ১. ডাটাবেস থেকে উক্ত প্রশ্নের সঠিক উত্তরটি নিয়ে আসা
+    // tbl_ans টেবিলে সঠিক উত্তরের জন্য rightAns = '1' ব্যবহার করা হয়েছে
+    $query  = "SELECT id FROM tbl_ans WHERE quesNo = '$quesNo' AND rightAns = '1'";
+    $result = $this->db->select($query);
+
+    if ($result) {
+        $row = $result->fetch_assoc();
+        $correct_ans_id = (int)$row['id'];
+
+        // ২. ইউজারের সিলেক্ট করা উত্তর ও ডাটাবেসের সঠিক উত্তর ম্যাচ করানো
+        if ($correct_ans_id > 0 && $correct_ans_id === $selectedAns) {
+            $score   = Session::get("score") ? Session::get("score") + 1 : 1;
+            $correct = Session::get("correct_ans") ? Session::get("correct_ans") + 1 : 1;
+
+            Session::set("score", $score);
+            Session::set("correct_ans", $correct);
+        } else {
+            $wrong = Session::get("wrong_ans") ? Session::get("wrong_ans") + 1 : 1;
+            Session::set("wrong_ans", $wrong);
+        }
+    }
 }
 
   public function getTotalRows() {
@@ -240,6 +296,28 @@ public function delQuestion($quesno) {
     return $result;
 
   }
+
+  // ক্যাটাগরি ও প্রশ্ন থাকার ওপর ভিত্তি করে সাবজেক্ট লোড করার মেথড
+public function getSubjectsWithQuestions($category_id = 0) {
+    $category_id = (int)$category_id;
+    
+    $where = "WHERE q.isDeleted = 0";
+    if ($category_id > 0) {
+        $where .= " AND q.category_id = '$category_id'";
+    }
+
+    // tbl_ques টেবিলের সাথে JOIN দিয়ে প্রশ্ন থাকা সাবজেক্ট ফেচ করা
+    $query = "SELECT DISTINCT s.id, s.subject_name, COUNT(q.quesNo) as total_ques 
+              FROM tbl_subject s 
+              INNER JOIN tbl_ques q ON s.id = q.subject_id 
+              $where 
+              GROUP BY s.id, s.subject_name 
+              ORDER BY s.subject_name ASC";
+
+    $result = $this->db->select($query);
+    return $result;
+}
+
   public function getQuesByNumber($number){
     $query = "SELECT * FROM tbl_ques WHERE quesNo ='$number'";
     $getData = $this->db->select($query);

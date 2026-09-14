@@ -3,9 +3,36 @@ include 'inc/header.php';
 Session::checkSession();
 
 // সেশন থেকে ইউজারের সিলেক্ট করা উত্তরসমূহ লোড করা
-$userAnswers = Session::get("user_ans") ? Session::get("user_ans") : [];
+$userAnswers   = Session::get("user_ans") ? Session::get("user_ans") : [];
 $examQuestions = Session::get("exam_questions");
-$total = Session::get("exam_total_ques") ? count($examQuestions) : $exm->getTotalRows();
+
+// URL থেকে ট্র্যাকিং কোড রিড করা
+$attemptCode   = isset($_GET['code']) ? mysqli_real_escape_string($db->link, $_GET['code']) : '';
+
+$categoryId = null;
+$subjectId  = null;
+$total      = null;
+
+// ১. হিস্ট্রি টেবিল থেকে অ্যাটেম্পটের বিবরণ ও ক্যাটাগরি/সাবজেক্ট ফিল্টার লোড করা
+if (!empty($attemptCode)) {
+    $historyQuery = "SELECT total_questions, category_id, subject_id FROM tbl_exam_history WHERE attempt_code = '$attemptCode'";
+    $historyData  = $db->select($historyQuery);
+    if ($historyData) {
+        $hRow       = $historyData->fetch_assoc();
+        $total      = (int)$hRow['total_questions'];
+        $categoryId = (int)$hRow['category_id'];
+        $subjectId  = (int)$hRow['subject_id'];
+    }
+} 
+
+// ২. সেশন বা ফলব্যাক থেকে মোট প্রশ্ন সেট করা
+if (!$total) {
+    if ($examQuestions && is_array($examQuestions)) {
+        $total = count($examQuestions);
+    } else {
+        $total = Session::get("exam_total_ques") ? Session::get("exam_total_ques") : $exm->getTotalRows();
+    }
+}
 ?>
 
 <div class="max-w-4xl mx-auto my-10 px-4">
@@ -33,6 +60,7 @@ $total = Session::get("exam_total_ques") ? count($examQuestions) : $exm->getTota
     <!-- Questions Container -->
     <div class="space-y-6 mb-8">
         <?php 
+            // অপশন A: যদি সেশনে পরীক্ষার প্রশ্ন আইডি সংরক্ষিত থাকে
             if ($examQuestions && !empty($examQuestions)) {
                 $count = 0;
                 foreach ($examQuestions as $quesNo) {
@@ -57,10 +85,9 @@ $total = Session::get("exam_total_ques") ? count($examQuestions) : $exm->getTota
                         $answer = $exm->getAnswer($quesNo);
                         if ($answer) {
                             while ($result = $answer->fetch_assoc()) {
-                                $isRight = ($result['rightAns'] == '1');
+                                $isRight    = ($result['rightAns'] == '1');
                                 $isSelected = ($selectedAnsId == $result['id']);
 
-                                // Dynamic CSS Classes based on accuracy
                                 $cardStyle = "border-slate-100 text-slate-600";
                                 if ($isRight) {
                                     $cardStyle = "border-emerald-300 bg-emerald-50/60 text-emerald-900 font-semibold";
@@ -106,16 +133,30 @@ $total = Session::get("exam_total_ques") ? count($examQuestions) : $exm->getTota
                     }
                 }
             } else {
-                // সেশন ডাটা না থাকলে ডিফল্ট সব প্রশ্ন ডাটাবেজ থেকে পড়া
-                $getQues = $exm->getQueByOrder();
+                // অপশন B: সেশন না থাকলে নির্দিষ্ট Category ও Subject ফিল্টার করে ডাটাবেজ থেকে প্রশ্ন লোড করা
+                $conditions = ["isDeleted = 0"];
+                if ($categoryId && $categoryId > 0) {
+                    $conditions[] = "category_id = '$categoryId'";
+                }
+                if ($subjectId && $subjectId > 0) {
+                    $conditions[] = "subject_id = '$subjectId'";
+                }
+
+                $whereClause = "WHERE " . implode(" AND ", $conditions);
+                $limitClause = $total ? "LIMIT $total" : "";
+
+                $getQues = $db->select("SELECT * FROM tbl_ques $whereClause ORDER BY quesNo ASC $limitClause");
+
                 if ($getQues) {
+                    $count = 0;
                     while ($question = $getQues->fetch_assoc()) {
+                        $count++;
                         $quesNo = $question['quesNo'];
         ?>
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="bg-slate-50 border-b border-slate-100 p-5">
                     <h3 class="text-base font-bold text-slate-800">
-                        <span class="text-indigo-600 font-black mr-1">Q<?php echo $quesNo; ?>.</span> 
+                        <span class="text-indigo-600 font-black mr-1">Q<?php echo $count; ?>.</span> 
                         <?php echo htmlspecialchars($question['ques']); ?>
                     </h3>
                 </div>
