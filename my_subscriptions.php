@@ -28,56 +28,57 @@
                 <thead class="bg-slate-100 text-slate-600 uppercase text-[10px] tracking-wider border-b border-slate-200">
                     <tr>
                         <th class="p-4">প্যাকেজ / টাইপ</th>
-                        <th class="p-4">মেয়াদ</th>
+                        <th class="p-4">মেয়াদ</th>
                         <th class="p-4">মেথড / TrxID</th>
                         <th class="p-4">পরিমাণ</th>
                         <th class="p-4">স্ট্যাটাস</th>
-                        <th class="p-4">মেয়াদ শেষ</th>
+                        <th class="p-4">মেয়াদ শেষ</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
                     <?php 
                         $getUserSub = $exm->getSubscriptionByUserId($userId);
-                        if ($getUserSub) {
+                        if ($getUserSub && $getUserSub->num_rows > 0) {
                             while ($data = $getUserSub->fetch_assoc()) {
+                                $status      = strtolower(trim((string)($data['status'] ?? '')));
+                                $currentDate = date('Y-m-d H:i:s');
+                                $expireDate  = $data['expire_date'] ?? '';
                     ?>
                         <tr class="hover:bg-slate-50 transition">
-    <td class="p-4 font-bold text-slate-900">
-        <?php echo htmlspecialchars($data['exam_type'] ?? 'General Exam'); ?>
-    </td>
-    <td class="p-4">
-        <?php echo htmlspecialchars($data['duration']); ?>
-    </td>
-    <td class="p-4">
-        <span class="font-semibold text-slate-800">
-            <?php echo !empty($data['payment_method']) ? htmlspecialchars($data['payment_method']) : 'N/A'; ?>
-        </span>
-        <span class="block text-[10px] text-slate-400 font-mono">
-            <?php echo !empty($data['trx_id']) ? htmlspecialchars($data['trx_id']) : ''; ?>
-        </span>
-    </td>
-    <td class="p-4 font-bold">
-        ৳<?php echo number_format($data['amount'], 2); ?>
-    </td>
-    <td class="p-4">
-        <?php if ($data['status'] == 'active') { ?>
-            <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 font-bold rounded-full text-[10px] inline-flex items-center gap-1">
-                <i class="fa-solid fa-circle-check"></i> Active
-            </span>
-        <?php } elseif ($data['status'] == 'pending') { ?>
-            <span class="px-2.5 py-1 bg-amber-100 text-amber-700 font-bold rounded-full text-[10px] inline-flex items-center gap-1">
-                <i class="fa-solid fa-clock"></i> Pending
-            </span>
-        <?php } else { ?>
-            <span class="px-2.5 py-1 bg-rose-100 text-rose-700 font-bold rounded-full text-[10px] inline-flex items-center gap-1">
-                <i class="fa-solid fa-circle-xmark"></i> Expired
-            </span>
-        <?php } ?>
-    </td>
-    <td class="p-4 text-slate-500 font-mono">
-        <?php echo (!empty($data['expire_date']) && $data['expire_date'] != '0000-00-00 00:00:00') ? date('d M, Y', strtotime($data['expire_date'])) : 'N/A'; ?>
-    </td>
-</tr>
+                            <td class="p-4 font-bold text-slate-900">
+                                <?php echo htmlspecialchars($data['exam_type'] ?? 'General Exam'); ?>
+                            </td>
+                            <td class="p-4">
+                                <?php echo htmlspecialchars($data['duration'] ?? ''); ?>
+                            </td>
+                            <td class="p-4">
+                                <span class="font-semibold text-slate-800">
+                                    <?php echo !empty($data['payment_method']) ? htmlspecialchars($data['payment_method']) : 'N/A'; ?>
+                                </span>
+                                <span class="block text-[10px] text-slate-400 font-mono">
+                                    <?php echo !empty($data['trx_id']) ? htmlspecialchars($data['trx_id']) : ''; ?>
+                                </span>
+                            </td>
+                            <td class="p-4 font-bold">
+                                ৳<?php echo number_format((float)($data['amount'] ?? 0), 2); ?>
+                            </td>
+                            <td class="p-4">
+                                <?php 
+                                    if ($status == 'rejected') {
+                                        echo '<span class="px-2.5 py-1 bg-rose-100 text-rose-700 font-bold rounded-full text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>';
+                                    } elseif ($status == 'approved' && !empty($expireDate) && $currentDate > $expireDate) {
+                                        echo '<span class="px-2.5 py-1 bg-rose-100 text-rose-700 font-bold rounded-full text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-circle-xmark"></i> Expired</span>';
+                                    } elseif ($status == 'approved') {
+                                        echo '<span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 font-bold rounded-full text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Active</span>';
+                                    } else {
+                                        echo '<span class="px-2.5 py-1 bg-amber-100 text-amber-700 font-bold rounded-full text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> Pending</span>';
+                                    }
+                                ?>
+                            </td>
+                            <td class="p-4 text-slate-500 font-mono">
+                                <?php echo (!empty($expireDate) && $expireDate != '0000-00-00 00:00:00' && $status == 'approved') ? date('d M, Y', strtotime($expireDate)) : 'N/A'; ?>
+                            </td>
+                        </tr>
                     <?php 
                             }
                         } else {

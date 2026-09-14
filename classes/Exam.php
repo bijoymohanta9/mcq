@@ -291,6 +291,52 @@ public function delQuestion($quesno) {
         $query = "SELECT * FROM tbl_subject ORDER BY id DESC";
         return $this->db->select($query);
     }
+
+    // Get all subscriptions for Admin
+// Get all subscriptions for Admin
+public function getAllSubscriptions() {
+    $query = "SELECT s.*, u.name as user_name, u.email 
+              FROM tbl_subscription s 
+              JOIN tbl_user u ON s.user_id = u.userId 
+              ORDER BY s.id DESC";
+    return $this->db->select($query);
+}
+
+// Update Subscription Status and set Start/Expire Date
+// Update Subscription Status and set Start/Expire Date
+public function updateSubscriptionStatus($sub_id, $status, $duration) {
+    $sub_id   = mysqli_real_escape_string($this->db->link, $sub_id);
+    $status   = mysqli_real_escape_string($this->db->link, $status);
+    $duration = mysqli_real_escape_string($this->db->link, $duration);
+
+    if (strtolower($status) == 'approved') {
+        $start_date = date('Y-m-d H:i:s');
+        
+        // Duration Check
+        if (strpos($duration, '365') !== false || strpos($duration, '1') !== false) {
+            $expire_date = date('Y-m-d H:i:s', strtotime('+365 days'));
+        } elseif (strpos($duration, '90') !== false || strpos($duration, '3') !== false) {
+            $expire_date = date('Y-m-d H:i:s', strtotime('+90 days'));
+        } else {
+            $expire_date = date('Y-m-d H:i:s', strtotime('+30 days'));
+        }
+
+        $query = "UPDATE tbl_subscription 
+                  SET status = '$status', start_date = '$start_date', expire_date = '$expire_date' 
+                  WHERE id = '$sub_id'";
+    } else {
+        $query = "UPDATE tbl_subscription SET status = '$status' WHERE id = '$sub_id'";
+    }
+
+    // Execute Query
+    $update_row = $this->db->link->query($query);
+
+    if ($update_row) {
+        return "<div class='p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-50 border border-green-200 font-bold'>Subscription status updated successfully!</div>";
+    } else {
+        return "<div class='p-3 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200 font-bold'>Failed to update: " . $this->db->link->error . "</div>";
+    }
+}
 }
 
 

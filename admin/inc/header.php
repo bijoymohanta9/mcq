@@ -69,6 +69,9 @@
                     <a href="queslist.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-list-check"></i> Ques List
                     </a>
+                    <a href="subscriptions.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-check"></i> Subscriptions
+                    </a>
                     <a href="leaderboard.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-trophy text-amber-400"></i> Leaderboard
                     </a>
