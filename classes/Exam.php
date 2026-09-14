@@ -101,6 +101,34 @@ public function delQuestion($quesno) {
 		return $result;
 	}
 
+  public function setupCustomExam($category_id, $num_questions, $time_limit) {
+    $category_id   = (int)$category_id;
+    $num_questions = (int)$num_questions;
+
+    $whereCond = "";
+    if ($category_id > 0) {
+        $whereCond = "WHERE category_id = '$category_id'";
+    }
+
+    // ডাটাবেজ থেকে রেনডমলি প্রশ্ন নেওয়া
+    $query  = "SELECT quesNo FROM tbl_ques $whereCond ORDER BY RAND() LIMIT $num_questions";
+    $result = $this->db->select($query);
+
+    $quesList = array();
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $quesList[] = $row['quesNo'];
+        }
+    }
+
+    // সেশনে ডেটা সেভ করা
+    Session::set("exam_questions", $quesList);
+    Session::set("exam_total_ques", count($quesList));
+    Session::set("exam_time_limit", $time_limit);
+    Session::set("exam_start_time", time());
+    Session::set("exam_category_id", $category_id);
+}
+
   public function getTotalRows() {
     $query = "SELECT * FROM tbl_ques";
     $getResult = $this->db->select($query);
