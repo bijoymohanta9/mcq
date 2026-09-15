@@ -120,6 +120,13 @@ public function getSubscriptionByUserId($userId) {
     return $result;
 }
 
+public function getCategoryById($id) {
+    $id = mysqli_real_escape_string($this->db->link, $id);
+    $query = "SELECT * FROM tbl_category WHERE id = '$id'"; // Replace tbl_category with your actual database table name if different
+    $result = $this->db->select($query);
+    return $result;
+}
+
   // সফট ডিলিট করার জন্য (DELETE কোয়েরির বদলে UPDATE কোয়েরি)
 public function delQuestion($quesno) {
     $quesno = mysqli_real_escape_string($this->db->link, $quesno);

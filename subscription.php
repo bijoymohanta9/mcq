@@ -1,9 +1,8 @@
-<?php include 'inc/header.php'; ?>
-<?php
-// ইউজার লগইন না থাকলে লগইন পেজে রিডাইরেক্ট হবে
-Session::checkSession();
-include_once 'classes/Exam.php';
-$exm = new Exam();
+<?php 
+    include 'inc/header.php'; 
+    Session::checkSession();
+    include_once 'classes/Exam.php';
+    $exm = new Exam();
 ?>
 
 <div class="w-full max-w-5xl mx-auto my-6 px-4">
@@ -30,7 +29,6 @@ $exm = new Exam();
                     $getCats = $exm->getCategories();
                     if ($getCats) {
                         $i = 0;
-                        // আইকন এবং কালারের জন্য এরে
                         $icons  = ['fa-book-bookmark', 'fa-building-columns', 'fa-graduation-cap', 'fa-user-tie', 'fa-gear'];
                         $colors = [
                             ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-600', 'hover' => 'group-hover:bg-indigo-600'],
@@ -52,10 +50,10 @@ $exm = new Exam();
                                     <i class="fa-solid <?php echo $icon; ?>"></i>
                                 </div>
                                 <h4 class="font-bold text-slate-800 text-lg mb-1"><?php echo htmlspecialchars($cat['category_name']); ?></h4>
-                                <p class="text-slate-500 text-xs leading-relaxed"><?php echo htmlspecialchars($cat['category_name']); ?> সিলেবাস অনুযায়ী বিষয়ভিত্তিক ও পূর্ণাঙ্গ প্রশ্নব্যাংক মডেল টেস্ট।</p>
+                                <p class="text-slate-500 text-xs leading-relaxed"><?php echo htmlspecialchars($cat['category_name']); ?> সিলেবাস অনুযায়ী বিষয়ভিত্তিক ও পূর্ণাঙ্গ প্রশ্নব্যাংক মডেল টেস্ট।</p>
                             </div>
                             <div class="mt-4 flex items-center justify-between text-xs <?php echo $color['text']; ?> font-semibold">
-                                <span>বিষয়ভিত্তিক পরীক্ষা</span>
+                                <span>বিষয়ভিত্তিক পরীক্ষা</span>
                                 <i class="fa-solid fa-circle-check text-lg"></i>
                             </div>
                         </div>
@@ -63,7 +61,7 @@ $exm = new Exam();
                 <?php 
                         }
                     } else {
-                        echo "<p class='text-slate-500 text-sm col-span-3 text-center'>কোনো ক্যাটাগরি পাওয়া যায়নি!</p>";
+                        echo "<p class='text-slate-500 text-sm col-span-3 text-center'>কোনো ক্যাটাগরি পাওয়া যায়নি!</p>";
                     }
                 ?>
             </div>
@@ -135,26 +133,35 @@ $exm = new Exam();
 
 </div>
 
-<!-- Auto Price Calculation & Dynamic AJAX Script -->
-<!-- Auto Price Calculation & Redirect Script -->
+<!-- Dynamic Price Sync & Redirection Script -->
 <script>
     $(document).ready(function() {
-        // ১. রেডিও বাটন সিলেক্ট পরিবর্তন হলে ইউআই-এর মোট টাকা আপডেট হবে
+        // Localized Bengali numerals helper function
+        function toBengaliNumber(n) {
+            const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            return n.toString().replace(/\d/g, d => banglaDigits[d]);
+        }
+
+        // 1. Sync price dynamically on initial page load (fixes 6-month default selection sync)
+        var initialPrice = $(".duration-radio:checked").data('price');
+        if (initialPrice) {
+            $('#totalAmount').text(toBengaliNumber(initialPrice));
+        }
+
+        // 2. Update price on duration radio change
         $('.duration-radio').change(function() {
             var price = $(this).data('price');
-            $('#totalAmount').text(price);
+            $('#totalAmount').text(toBengaliNumber(price));
         });
 
-        // ২. ফর্ম সাবমিট হলে সিলেক্ট করা ডাটা সহ checkout.php পেজে রিডাইরেক্ট হবে
+        // 3. Handle form submission & redirect to checkout.php
         $("#subscriptionForm").submit(function(e){
             e.preventDefault();
 
-            // সিলেক্টেড ক্যাটাগরি ID, প্ল্যান ও প্রাইজ পিক করা
             var selectedCategory = $("input[name='category_id']:checked").val();
             var selectedPlan     = $("input[name='duration']:checked").val();
             var amount           = $("input[name='duration']:checked").data('price');
 
-            // ভ্যালিডেশন চেক
             if (!selectedCategory) {
                 alert("অনুগ্রহ করে একটি পরীক্ষা বা ক্যাটাগরি নির্বাচন করুন।");
                 return false;
@@ -165,7 +172,6 @@ $exm = new Exam();
                 return false;
             }
 
-            // URL Parameters তৈরি করে checkout.php পেজে রিডাইরেক্ট
             var checkoutUrl = "checkout.php?category_id=" + encodeURIComponent(selectedCategory) + 
                               "&plan=" + encodeURIComponent(selectedPlan) + 
                               "&amount=" + encodeURIComponent(amount);
