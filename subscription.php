@@ -136,6 +136,7 @@ $exm = new Exam();
 </div>
 
 <!-- Auto Price Calculation & Dynamic AJAX Script -->
+<!-- Auto Price Calculation & Redirect Script -->
 <script>
     $(document).ready(function() {
         // ১. রেডিও বাটন সিলেক্ট পরিবর্তন হলে ইউআই-এর মোট টাকা আপডেট হবে
@@ -144,35 +145,32 @@ $exm = new Exam();
             $('#totalAmount').text(price);
         });
 
-        // ২. ফর্ম সাবমিট হ্যান্ডলার (ডায়নামিক ভ্যালু পিক করবে)
+        // ২. ফর্ম সাবমিট হলে সিলেক্ট করা ডাটা সহ checkout.php পেজে রিডাইরেক্ট হবে
         $("#subscriptionForm").submit(function(e){
             e.preventDefault();
 
-            // সিলেক্টেড ক্যাটাগরি ID ও প্ল্যান নেওয়া
+            // সিলেক্টেড ক্যাটাগরি ID, প্ল্যান ও প্রাইজ পিক করা
             var selectedCategory = $("input[name='category_id']:checked").val();
-            var selectedPlan = $("input[name='duration']:checked").val();
-            var amount = $("input[name='duration']:checked").data('price');
+            var selectedPlan     = $("input[name='duration']:checked").val();
+            var amount           = $("input[name='duration']:checked").data('price');
 
-            $.ajax({
-                type: "POST",
-                url: "process_subscription.php",
-                data: {
-                    category_id: selectedCategory,
-                    plan: selectedPlan,
-                    amount: amount
-                },
-                success: function(response){
-                    var res = $.trim(response);
-                    if(res == "success"){
-                        window.location = "exam.php";
-                    } else {
-                        alert("পেমেন্ট প্রক্রিয়াকরণে সমস্যা হয়েছে: " + res);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert("Server Error: " + error);
-                }
-            });
+            // ভ্যালিডেশন চেক
+            if (!selectedCategory) {
+                alert("অনুগ্রহ করে একটি পরীক্ষা বা ক্যাটাগরি নির্বাচন করুন।");
+                return false;
+            }
+
+            if (!selectedPlan) {
+                alert("অনুগ্রহ করে সাবস্ক্রিপশনের মেয়াদ সিলেক্ট করুন।");
+                return false;
+            }
+
+            // URL Parameters তৈরি করে checkout.php পেজে রিডাইরেক্ট
+            var checkoutUrl = "checkout.php?category_id=" + encodeURIComponent(selectedCategory) + 
+                              "&plan=" + encodeURIComponent(selectedPlan) + 
+                              "&amount=" + encodeURIComponent(amount);
+
+            window.location.href = checkoutUrl;
         });
     });
 </script>

@@ -1,23 +1,33 @@
 <?php
+    ob_start();
     $filepath = realpath(dirname(__FILE__));
     include_once ($filepath.'/../lib/Session.php');
     Session::init();
     include_once ($filepath.'/../lib/Database.php');
     include_once ($filepath.'/../helpers/Format.php');
+    
     spl_autoload_register(function($class){
         include_once "classes/".$class.".php";
     });
+    
     $db = new Database();
     $fm = new Format();
     $usr = new User();
     $exm = new Exam();
     $pro = new Process();
 
-header("Cache-Control: no-store, no-cache, must-revalidate"); 
-header("Cache-Control: pre-check=0, post-check=0, max-age=0"); 
-header("Pragma: no-cache"); 
-header("Expires: Mon, 6 Dec 1977 00:00:00 GMT"); 
-header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+    // Logout handling before HTML output
+    if (isset($_GET['action']) && $_GET['action'] == 'logout') {
+        Session::destroy();
+        header("Location: index.php");
+        exit();
+    }
+
+    header("Cache-Control: no-store, no-cache, must-revalidate"); 
+    header("Cache-Control: pre-check=0, post-check=0, max-age=0"); 
+    header("Pragma: no-cache"); 
+    header("Expires: Mon, 6 Dec 1977 00:00:00 GMT"); 
+    header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 ?>
 <!doctype html>
 <html lang="en">
@@ -40,14 +50,6 @@ header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
     <script src="js/main.js"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans text-slate-800">
-
-    <?php 
-    if (isset($_GET['action']) && $_GET['action'] == 'logout') {
-        Session::destroy();
-        header("Location:index.php");
-        exit();
-    }
-    ?>
 
     <!-- Main Navigation Header -->
     <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
@@ -77,8 +79,18 @@ header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
                             <i class="fa-solid fa-file-pen text-slate-400"></i> Take Exam
                         </a>
 
-                         <a href="exam_history.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
-                             <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Exam Records
+                        <a href="exam_history.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Exam Records
+                        </a>
+
+                        <!-- My Subscriptions -->
+                        <a href="my_subscriptions.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-gem text-amber-500"></i> Subscriptions
+                        </a>
+
+                        <!-- Buy Subscription Button -->
+                        <a href="subscription.php" class="px-3.5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-cart-shopping"></i> Buy Plan
                         </a>
                         
                         <a href="?action=logout" class="px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition flex items-center gap-1.5">

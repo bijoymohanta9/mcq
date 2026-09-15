@@ -87,6 +87,39 @@ public function saveExamResult($userId, $categoryId, $subjectId, $total, $score,
     }
 }
 
+public function createSubscriptionRequest($data, $userId) {
+    $userId         = (int)$userId;
+    $category_id    = (int)$this->fm->validation($data['category_id']);
+    $exam_type      = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['exam_type']));
+    $duration       = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['duration']));
+    $amount         = (float)$this->fm->validation($data['amount']);
+    $payment_method = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['payment_method']));
+    $sender_number  = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['sender_number']));
+    $trx_id         = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['trx_id']));
+
+    if (empty($trx_id) || empty($sender_number)) {
+        return "<div class='p-3 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold mb-4'>সকল ফিল্ড পূরণ করুন!</div>";
+    }
+
+    $query = "INSERT INTO tbl_subscription(user_id, category_id, exam_type, duration, amount, payment_method, trx_id, sender_number, status) 
+              VALUES('$userId', '$category_id', '$exam_type', '$duration', '$amount', '$payment_method', '$trx_id', '$sender_number', 'pending')";
+
+    $inserted = $this->db->insert($query);
+
+    if ($inserted) {
+        return "<div class='p-3 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold mb-4'>পেমেন্ট রিকোয়েস্ট জমা হয়েছে! অ্যাডমিন ভেরিফাই করে এক্টিভ করে দেবে।</div>";
+    } else {
+        return "<div class='p-3 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold mb-4'>পেমেন্ট রিকোয়েস্ট পাঠাতে সমস্যা হয়েছে।</div>";
+    }
+}
+
+public function getSubscriptionByUserId($userId) {
+    $userId = (int)$userId;
+    $query  = "SELECT * FROM tbl_subscription WHERE user_id = '$userId' ORDER BY id DESC";
+    $result = $this->db->select($query);
+    return $result;
+}
+
   // সফট ডিলিট করার জন্য (DELETE কোয়েরির বদলে UPDATE কোয়েরি)
 public function delQuestion($quesno) {
     $quesno = mysqli_real_escape_string($this->db->link, $quesno);
