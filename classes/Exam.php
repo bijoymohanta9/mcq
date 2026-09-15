@@ -101,33 +101,73 @@ public function delQuestion($quesno) {
 		return $result;
 	}
 
-  public function setupCustomExam($category_id, $num_questions, $time_limit) {
-    $category_id   = (int)$category_id;
-    $num_questions = (int)$num_questions;
+    public function saveExamResult($userId, $categoryId, $subjectId, $totalQues, $correct, $wrong) {
+    // ১. ইউনিক এক্সাম কোড তৈরি (যেমন: EXM-20260914-9F2B)
+    $attemptCode = "EXM-" . date('Ymd') . "-" . strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
 
-    $whereCond = "";
-    if ($category_id > 0) {
-        $whereCond = "WHERE category_id = '$category_id'";
+    // ২. প্রাপ্ত নম্বর ও সাফল্যের হার (%) হিসাব
+    $totalMarks = $correct; // প্রতিটি প্রশ্নের মান ১ হলে
+    $percentage = ($totalQues > 0) ? round(($correct / $totalQues) * 100, 2) : 0;
+    
+    // ৫০% বা তার বেশি হলে Passed (আপনার পছন্দমতো পরিবর্তন করতে পারেন)
+    $status = ($percentage >= 50.00) ? 'Passed' : 'Failed';
+
+    // ৩. ডাটাবেজে ইনসার্ট
+    $query = "INSERT INTO tbl_exam_history 
+              (attempt_code, user_id, category_id, subject_id, total_questions, correct_answers, wrong_answers, total_marks, percentage, status) 
+              VALUES 
+              ('$attemptCode', '$userId', '$categoryId', '$subjectId', '$totalQues', '$correct', '$wrong', '$totalMarks', '$percentage', '$status')";
+
+    $inserted = $this->db->insert($query);
+    if ($inserted) {
+        return $attemptCode; // রেজাল্ট পেজে রেফারেন্স দেখার জন্য ইউনিক কোড রিটার্ন
+    }
+    return false;
+}
+
+// ইউজারের সব পরীক্ষার হিস্ট্রি তুলে আনার মেথড
+public function getUserExamHistory($userId) {
+    $query = "SELECT h.*, 
+              IFNULL(s.subject_name, 'N/A') as subject_name, 
+              IFNULL(c.category_name, 'General') as category_name 
+              FROM tbl_exam_history h
+              LEFT JOIN tbl_subject s ON h.subject_id = s.id
+              LEFT JOIN tbl_category c ON h.category_id = c.id
+              WHERE h.user_id = '$userId' 
+              ORDER BY h.id DESC";
+    return $this->db->select($query);
+}
+
+  public function setupCustomExam($category_id, $num_questions, $time_limit) {
+    $category_id = (int)$category_id;
+    $num_questions = (int)$num_questions;
+    $time_limit = (int)$time_limit;
+
+    // ক্যাটাগরি 0 (Random All) নাকি নির্দিষ্ট ক্যাটাগরি ফিল্টার
+    if ($category_id == 0) {
+        $query = "SELECT quesNo FROM tbl_ques ORDER BY RAND() LIMIT $num_questions";
+    } else {
+        $query = "SELECT quesNo FROM tbl_ques WHERE category_id = '$category_id' ORDER BY RAND() LIMIT $num_questions";
     }
 
-    // ডাটাবেজ থেকে রেনডমলি প্রশ্ন নেওয়া
-    $query  = "SELECT quesNo FROM tbl_ques $whereCond ORDER BY RAND() LIMIT $num_questions";
     $result = $this->db->select($query);
+    $quesArray = array();
 
-    $quesList = array();
     if ($result) {
         while ($row = $result->fetch_assoc()) {
-            $quesList[] = $row['quesNo'];
+            $quesArray[] = $row['quesNo'];
         }
     }
 
-    // সেশনে ডেটা সেভ করা
-    Session::set("exam_questions", $quesList);
-    Session::set("exam_total_ques", count($quesList));
+    // সেশনে সেভ করা (সঠিক কাউন্ট সহ)
+    Session::set("exam_questions", $quesArray);
+    Session::set("exam_total_ques", count($quesArray)); // আসল পাওয়া প্রশ্নের সংখ্যা
     Session::set("exam_time_limit", $time_limit);
     Session::set("exam_start_time", time());
-    Session::set("exam_category_id", $category_id);
+    Session::set("score", 0); // নতুন পরীক্ষার স্কোর রিসেট
 }
+
+
 
   public function getTotalRows() {
     $query = "SELECT * FROM tbl_ques";

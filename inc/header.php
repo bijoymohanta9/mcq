@@ -74,8 +74,13 @@ header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
                             <i class="fa-regular fa-user text-slate-400"></i> Profile
                         </a>
                         <a href="exam.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-file-pen text-slate-400"></i> Exam
+                            <i class="fa-solid fa-file-pen text-slate-400"></i> Take Exam
                         </a>
+
+                         <a href="exam_history.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
+                             <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Exam Records
+                        </a>
+                        
                         <a href="?action=logout" class="px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition flex items-center gap-1.5">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
                         </a>

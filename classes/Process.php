@@ -14,30 +14,29 @@ class Process{
 		$this->fm = new Format();
 	}
 
-	public function processData($data){
-		$selectedAns    = $this->fm->validation($data['ans']);
-		$number         = $this->fm->validation($data['number']);
-		$selectedAns    = mysqli_real_escape_string($this->db->link,$selectedAns);
-		$number         = mysqli_real_escape_string($this->db->link,$number);
-		$next           = $number+1;
+	public function processData($data, $step, $total) {
+    $selectedAns = isset($data['ans']) ? (int)$data['ans'] : 0;
+    $number      = (int)$data['number'];
 
-		if (!isset($_SESSION['score'])) {
-			$_SESSION['score'] = '0';
-		}
+    // সঠিক উত্তর চেক করা
+    $query = "SELECT * FROM tbl_ans WHERE quesNo = '$number' AND rightAns = '1'";
+    $getAns = $this->db->select($query)->fetch_assoc();
 
-		$total = $this->getTotal();
-		$right = $this->rightAns($number);
-		if ($right == $selectedAns) {
-			$_SESSION['score']++;
-		}
-		if ($number == $total) {
-			header("Location:final.php");
-			exit();
-		}else{
-			header("Location:test.php?q=".$next);
-		}
+    if ($getAns && $getAns['id'] == $selectedAns) {
+        $score = Session::get("score");
+        Session::set("score", $score + 1);
+    }
 
-	}
+    // নেক্সট স্টেপ রিডাইরেকশন
+    $nextStep = $step + 1;
+    if ($nextStep > $total) {
+        header("Location: final.php");
+        exit();
+    } else {
+        header("Location: test.php?q=" . $nextStep);
+        exit();
+    }
+}
 
 	public function getLeaderboardByCategory($category_id) {
 		$category_id = mysqli_real_escape_string($this->db->link, $category_id);
