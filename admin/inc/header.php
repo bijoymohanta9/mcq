@@ -60,6 +60,9 @@
                     <a href="users.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-users"></i> Manage User
                     </a>
+                    <a href="add_category_subject.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-users"></i> Add Category & Subjects
+                    </a>
                     <a href="quesadd.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-plus-circle"></i> Add Ques
                     </a>

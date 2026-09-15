@@ -44,8 +44,13 @@
                     <?php echo $row['attempt_code']; ?>
                 </td>
                 <td class="py-4 px-4">
-                    <div class="font-bold text-slate-800"><?php echo $row['subject_name']; ?></div>
-                    <div class="text-[10px] text-slate-400"><?php echo $row['category_name']; ?></div>
+                   <!-- লাইন ৪৭ ও ৪৮ এভাবে আপডেট করুন -->
+                    <h4 class="font-bold text-slate-800">
+                        <?php echo htmlspecialchars($data['subject_name'] ?? 'সাধারণ পরীক্ষা'); ?>
+                    </h4>
+                    <p class="text-xs text-slate-500">
+                        <?php echo htmlspecialchars($data['category_name'] ?? 'সকল ক্যাটাগরি'); ?>
+                    </p>
                 </td>
                 <td class="py-4 px-4 text-slate-500">
                     <?php echo date('d M Y, h:i A', strtotime($row['exam_date'])); ?>

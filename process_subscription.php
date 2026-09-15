@@ -6,7 +6,6 @@ Session::checkSession();
 
 include_once ($filepath . '/lib/Database.php');
 
-// আপনার অন্যান্য ফাইলের মত রিলেটিভ পাথ ব্যবহার করে ইনক্লুড
 if (file_exists('helpers/Format.php')) {
     include_once 'helpers/Format.php';
 } elseif (file_exists('lib/Format.php')) {
@@ -24,16 +23,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    // ইনপুট স্যানিটাইজেশন
-    $examType = $fm->validation($_POST['exam_type'] ?? '');
-    $duration = $fm->validation($_POST['plan'] ?? '');
-    $amount   = $fm->validation($_POST['amount'] ?? '');
+    // ১. category_id রিসিভ ও স্যানিটাইজ করা
+    $categoryId = $fm->validation($_POST['category_id'] ?? '');
+    $duration   = $fm->validation($_POST['plan'] ?? '');
+    $amount     = $fm->validation($_POST['amount'] ?? '');
 
-    $examType = mysqli_real_escape_string($db->link, $examType);
-    $duration = mysqli_real_escape_string($db->link, $duration);
-    $amount   = mysqli_real_escape_string($db->link, $amount);
+    $categoryId = mysqli_real_escape_string($db->link, $categoryId);
+    $duration   = mysqli_real_escape_string($db->link, $duration);
+    $amount     = mysqli_real_escape_string($db->link, $amount);
 
-    // প্ল্যান অনুযায়ী মেয়াদ নির্ধারণ
+    if (empty($categoryId)) {
+        echo "ক্যাটাগরি সিলেক্ট করুন!";
+        exit();
+    }
+
+    // ২. প্ল্যান অনুযায়ী মেয়াদ নির্ধারণ
     $monthsToAdd = 6;
     if ($duration === '3_months') {
         $monthsToAdd = 3;
@@ -44,8 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $startDate  = date('Y-m-d H:i:s');
     $expireDate = date('Y-m-d H:i:s', strtotime("+$monthsToAdd months"));
 
-    $query = "INSERT INTO tbl_subscription (user_id, exam_type, duration, amount, status, start_date, expire_date) 
-              VALUES ('$userId', '$examType', '$duration', '$amount', 'active', '$startDate', '$expireDate')";
+    // ৩. category_id কলামে ডাটা ইনসার্ট ক্যোয়ারি
+    $query = "INSERT INTO tbl_subscription (user_id, category_id, duration, amount, status, start_date, expire_date) 
+              VALUES ('$userId', '$categoryId', '$duration', '$amount', 'active', '$startDate', '$expireDate')";
 
     $insert = $db->insert($query);
 

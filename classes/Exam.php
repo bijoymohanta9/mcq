@@ -12,48 +12,50 @@ class Exam{
 		$this->fm = new Format();
 	}
 
+    public function getCategories() {
+    $query = "SELECT * FROM tbl_category ORDER BY id ASC";
+    return $this->db->select($query);
+}
+
   public function addQuestions($data) {
-    $quesNo      = mysqli_real_escape_string($this->db->link, $data['quesNo']);
-    $category_id = mysqli_real_escape_string($this->db->link, $data['category_id']);
-    $subject_id  = mysqli_real_escape_string($this->db->link, $data['subject_id']);
-    $ques        = mysqli_real_escape_string($this->db->link, $data['ques']);
-    
+    $category_id = $this->fm->validation($data['category_id']);
+    $subject_id  = $this->fm->validation($data['subject_id']);
+    $quesNo      = $this->fm->validation($data['quesNo']);
+    $ques        = $this->fm->validation($data['ques']);
+    $rightAns    = $this->fm->validation($data['rightAns']);
+
+    $category_id = mysqli_real_escape_string($this->db->link, $category_id);
+    $subject_id  = mysqli_real_escape_string($this->db->link, $subject_id);
+    $quesNo      = mysqli_real_escape_string($this->db->link, $quesNo);
+    $ques        = mysqli_real_escape_string($this->db->link, $ques);
+    $rightAns    = mysqli_real_escape_string($this->db->link, $rightAns);
+
     $ans = array();
-    $ans[1] = mysqli_real_escape_string($this->db->link, $data['ans1']);
-    $ans[2] = mysqli_real_escape_string($this->db->link, $data['ans2']);
-    $ans[3] = mysqli_real_escape_string($this->db->link, $data['ans3']);
-    $ans[4] = mysqli_real_escape_string($this->db->link, $data['ans4']);
-    $rightAns = mysqli_real_escape_string($this->db->link, $data['rightAns']);
+    $ans[1] = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['ans1']));
+    $ans[2] = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['ans2']));
+    $ans[3] = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['ans3']));
+    $ans[4] = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['ans4']));
 
-    // ১. খালি ফিল্ড চেক
-    if (empty($quesNo) || empty($category_id) || empty($subject_id) || empty($ques) || empty($ans[1]) || empty($ans[2]) || empty($ans[3]) || empty($ans[4]) || empty($rightAns)) {
-        $msg = "<span class='text-rose-600 font-semibold'>সবগুলো ফিল্ড অবশ্যই পূরণ করতে হবে!</span>";
-        return $msg;
-    } 
-
-    // ২. tbl_ques টেবিলে মূল প্রশ্নটি মাত্র ১ বার Insert করা
-    $query = "INSERT INTO tbl_ques(quesNo, category_id, subject_id, ques) 
-              VALUES('$quesNo', '$category_id', '$subject_id', '$ques')";
+    // ১. tbl_ques টেবিলে প্রশ্ন এবং ক্যাটাগরি/সাবজেক্ট আইডি ইনসার্ট
+    $query = "INSERT INTO tbl_ques(quesNo, ques, category_id, subject_id) 
+              VALUES('$quesNo', '$ques', '$category_id', '$subject_id')";
     $insert_row = $this->db->insert($query);
 
     if ($insert_row) {
-        // ৩. Loop চালিয়ে tbl_ans টেবিলে ৪টি অপশন আলাদাভাবে Insert করা
+        // ২. tbl_ans টেবিলে ৪টি অপশন ও সঠিক উত্তর ইনসার্ট
         foreach ($ans as $key => $ansName) {
             if ($ansName != '') {
                 $isRight = ($rightAns == $key) ? '1' : '0';
-                
                 $rquery = "INSERT INTO tbl_ans(quesNo, rightAns, ans) 
                            VALUES('$quesNo', '$isRight', '$ansName')";
                 $this->db->insert($rquery);
             }
         }
-        $msg = "<span class='text-emerald-600 font-semibold'>প্রশ্ন ও ৪টি অপশন সফলভাবে সেভ হয়েছে!</span>";
-        return $msg;
+        return "প্রশ্ন সফলভাবে যুক্ত করা হয়েছে!";
     } else {
-        $msg = "<span class='text-rose-600 font-semibold'>ডাটা সেভ করতে সমস্যা হয়েছে!</span>";
-        return $msg;
+        return "প্রশ্ন যুক্ত করতে সমস্যা হয়েছে!";
     }
-  }
+}
 
   // সফট ডিলিট করার জন্য (DELETE কোয়েরির বদলে UPDATE কোয়েরি)
 public function delQuestion($quesno) {
@@ -83,6 +85,20 @@ public function delQuestion($quesno) {
       return $result;
   }
 
+ public function getUserExamHistory($userId) {
+    $userId = $this->fm->validation($userId);
+    $userId = mysqli_real_escape_string($this->db->link, $userId);
+
+    $query = "SELECT h.*, c.category_name, s.subject_name 
+              FROM tbl_exam_history h 
+              LEFT JOIN tbl_category c ON h.category_id = c.id 
+              LEFT JOIN tbl_subject s ON h.subject_id = s.id
+              WHERE h.user_id = '$userId' 
+              ORDER BY h.id DESC";
+              
+    return $this->db->select($query);
+}
+
   public function getLeaderboardByCategory($category_id) {
 		$category_id = mysqli_real_escape_string($this->db->link, $category_id);
 
@@ -101,73 +117,39 @@ public function delQuestion($quesno) {
 		return $result;
 	}
 
-    public function saveExamResult($userId, $categoryId, $subjectId, $totalQues, $correct, $wrong) {
-    // ১. ইউনিক এক্সাম কোড তৈরি (যেমন: EXM-20260914-9F2B)
-    $attemptCode = "EXM-" . date('Ymd') . "-" . strtoupper(substr(md5(uniqid(rand(), true)), 0, 4));
-
-    // ২. প্রাপ্ত নম্বর ও সাফল্যের হার (%) হিসাব
-    $totalMarks = $correct; // প্রতিটি প্রশ্নের মান ১ হলে
-    $percentage = ($totalQues > 0) ? round(($correct / $totalQues) * 100, 2) : 0;
-    
-    // ৫০% বা তার বেশি হলে Passed (আপনার পছন্দমতো পরিবর্তন করতে পারেন)
-    $status = ($percentage >= 50.00) ? 'Passed' : 'Failed';
-
-    // ৩. ডাটাবেজে ইনসার্ট
-    $query = "INSERT INTO tbl_exam_history 
-              (attempt_code, user_id, category_id, subject_id, total_questions, correct_answers, wrong_answers, total_marks, percentage, status) 
-              VALUES 
-              ('$attemptCode', '$userId', '$categoryId', '$subjectId', '$totalQues', '$correct', '$wrong', '$totalMarks', '$percentage', '$status')";
-
-    $inserted = $this->db->insert($query);
-    if ($inserted) {
-        return $attemptCode; // রেজাল্ট পেজে রেফারেন্স দেখার জন্য ইউনিক কোড রিটার্ন
-    }
-    return false;
-}
-
-// ইউজারের সব পরীক্ষার হিস্ট্রি তুলে আনার মেথড
-public function getUserExamHistory($userId) {
-    $query = "SELECT h.*, 
-              IFNULL(s.subject_name, 'N/A') as subject_name, 
-              IFNULL(c.category_name, 'General') as category_name 
-              FROM tbl_exam_history h
-              LEFT JOIN tbl_subject s ON h.subject_id = s.id
-              LEFT JOIN tbl_category c ON h.category_id = c.id
-              WHERE h.user_id = '$userId' 
-              ORDER BY h.id DESC";
-    return $this->db->select($query);
-}
-
   public function setupCustomExam($category_id, $num_questions, $time_limit) {
-    $category_id = (int)$category_id;
+    $category_id   = (int)$category_id;
     $num_questions = (int)$num_questions;
-    $time_limit = (int)$time_limit;
+    $time_limit    = (int)$time_limit;
 
-    // ক্যাটাগরি 0 (Random All) নাকি নির্দিষ্ট ক্যাটাগরি ফিল্টার
-    if ($category_id == 0) {
-        $query = "SELECT quesNo FROM tbl_ques ORDER BY RAND() LIMIT $num_questions";
+    // ১. ক্যাটাগরি অনুসারে ক্যোয়ারী তৈরি
+    if ($category_id > 0) {
+        $query = "SELECT quesNo FROM tbl_ques WHERE category_id = '$category_id' AND isDeleted = 0 ORDER BY RAND() LIMIT $num_questions";
     } else {
-        $query = "SELECT quesNo FROM tbl_ques WHERE category_id = '$category_id' ORDER BY RAND() LIMIT $num_questions";
+        $query = "SELECT quesNo FROM tbl_ques WHERE isDeleted = 0 ORDER BY RAND() LIMIT $num_questions";
     }
 
     $result = $this->db->select($query);
-    $quesArray = array();
 
+    $examQuestions = array();
     if ($result) {
         while ($row = $result->fetch_assoc()) {
-            $quesArray[] = $row['quesNo'];
+            $examQuestions[] = $row['quesNo'];
         }
     }
 
-    // সেশনে সেভ করা (সঠিক কাউন্ট সহ)
-    Session::set("exam_questions", $quesArray);
-    Session::set("exam_total_ques", count($quesArray)); // আসল পাওয়া প্রশ্নের সংখ্যা
+    // ২. পরীক্ষার সেশন ডাটা সেট করা
+    Session::set("exam_questions", $examQuestions);
+    Session::set("exam_total_ques", count($examQuestions)); // সঠিক মোট প্রশ্ন সংখ্যা
     Session::set("exam_time_limit", $time_limit);
+    Session::set("exam_category_id", $category_id); // পরবর্তীতে হিস্ট্রিতে সেভ করার জন্য
     Session::set("exam_start_time", time());
-    Session::set("score", 0); // নতুন পরীক্ষার স্কোর রিসেট
+    
+    // স্কোর ও ট্র্যাকিং সেশন রিসেট
+    Session::set("score", 0);
+    Session::set("correct_ans", 0);
+    Session::set("wrong_ans", 0);
 }
-
-
 
   public function getTotalRows() {
     $query = "SELECT * FROM tbl_ques";
@@ -201,6 +183,44 @@ public function getUserExamHistory($userId) {
     $getData = $this->db->select($query);
     return $getData;
   }
+
+  // ক্যাটাগরি ও সাবজেক্ট সেভ করার মেথড
+    public function addCategory($category_name) {
+        $category_name = $this->fm->validation($category_name);
+        $category_name = mysqli_real_escape_string($this->db->link, $category_name);
+
+        if (empty($category_name)) {
+            return "<div class='text-rose-500 font-bold mb-3'>ক্যাটাগরির নাম দিন!</div>";
+        }
+
+        $query = "INSERT INTO tbl_category(category_name) VALUES('$category_name')";
+        $inserted = $this->db->insert($query);
+        return $inserted ? "<div class='text-emerald-500 font-bold mb-3'>ক্যাটাগরি যুক্ত হয়েছে!</div>" : "<div class='text-rose-500 font-bold mb-3'>সমস্যা হয়েছে!</div>";
+    }
+
+    public function addSubject($subject_name) {
+        $subject_name = $this->fm->validation($subject_name);
+        $subject_name = mysqli_real_escape_string($this->db->link, $subject_name);
+
+        if (empty($subject_name)) {
+            return "<div class='text-rose-500 font-bold mb-3'>বিষয়ের নাম দিন!</div>";
+        }
+
+        $query = "INSERT INTO tbl_subject(subject_name) VALUES('$subject_name')";
+        $inserted = $this->db->insert($query);
+        return $inserted ? "<div class='text-emerald-500 font-bold mb-3'>বিষয় যুক্ত হয়েছে!</div>" : "<div class='text-rose-500 font-bold mb-3'>সমস্যা হয়েছে!</div>";
+    }
+
+    // ড্রপডাউনে ডাটা লোড করার মেথড
+    public function getAllCategories() {
+        $query = "SELECT * FROM tbl_category ORDER BY id DESC";
+        return $this->db->select($query);
+    }
+
+    public function getAllSubjects() {
+        $query = "SELECT * FROM tbl_subject ORDER BY id DESC";
+        return $this->db->select($query);
+    }
 }
 
 

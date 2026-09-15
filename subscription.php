@@ -2,6 +2,8 @@
 <?php
 // ইউজার লগইন না থাকলে লগইন পেজে রিডাইরেক্ট হবে
 Session::checkSession();
+include_once 'classes/Exam.php';
+$exm = new Exam();
 ?>
 
 <div class="w-full max-w-5xl mx-auto my-6 px-4">
@@ -24,61 +26,46 @@ Session::checkSession();
             </div>
 
             <div class="grid md:grid-cols-3 gap-5">
-                
-                <!-- 1. BCS Preliminary Exam -->
-                <label class="relative cursor-pointer group">
-                    <input type="radio" name="exam_type" value="bcs" class="peer sr-only" required checked>
-                    <div class="p-6 bg-white border-2 border-slate-200 rounded-2xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-md transition-all h-full flex flex-col justify-between">
-                        <div>
-                            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-4 text-xl group-hover:bg-indigo-600 group-hover:text-white transition">
-                                <i class="fa-solid fa-book-bookmark"></i>
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-lg mb-1">বিসিএস প্রিলিমিনারি</h4>
-                            <p class="text-slate-500 text-xs leading-relaxed">বিসিএস প্রিলির সিলেবাস অনুযায়ী বিষয়ভিত্তিক ও পূর্ণাঙ্গ মডেল টেস্ট।</p>
-                        </div>
-                        <div class="mt-4 flex items-center justify-between text-xs text-indigo-600 font-semibold">
-                            <span>বিষয়ভিত্তিক পরীক্ষা</span>
-                            <i class="fa-solid fa-circle-check text-indigo-600 text-lg"></i>
-                        </div>
-                    </div>
-                </label>
+                <?php 
+                    $getCats = $exm->getCategories();
+                    if ($getCats) {
+                        $i = 0;
+                        // আইকন এবং কালারের জন্য এরে
+                        $icons  = ['fa-book-bookmark', 'fa-building-columns', 'fa-graduation-cap', 'fa-user-tie', 'fa-gear'];
+                        $colors = [
+                            ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-600', 'hover' => 'group-hover:bg-indigo-600'],
+                            ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-600', 'hover' => 'group-hover:bg-emerald-600'],
+                            ['bg' => 'bg-amber-100', 'text' => 'text-amber-600', 'hover' => 'group-hover:bg-amber-600']
+                        ];
 
-                <!-- 2. Bank Job Exam -->
-                <label class="relative cursor-pointer group">
-                    <input type="radio" name="exam_type" value="bank" class="peer sr-only">
-                    <div class="p-6 bg-white border-2 border-slate-200 rounded-2xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-md transition-all h-full flex flex-col justify-between">
-                        <div>
-                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 text-xl group-hover:bg-emerald-600 group-hover:text-white transition">
-                                <i class="fa-solid fa-building-columns"></i>
+                        while ($cat = $getCats->fetch_assoc()) {
+                            $icon  = $icons[$i % count($icons)];
+                            $color = $colors[$i % count($colors)];
+                            $i++;
+                ?>
+                    <!-- Dynamic Category Card -->
+                    <label class="relative cursor-pointer group">
+                        <input type="radio" name="category_id" value="<?php echo $cat['id']; ?>" class="peer sr-only" required <?php if($i == 1) echo 'checked'; ?>>
+                        <div class="p-6 bg-white border-2 border-slate-200 rounded-2xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-md transition-all h-full flex flex-col justify-between">
+                            <div>
+                                <div class="w-12 h-12 <?php echo $color['bg']; ?> <?php echo $color['text']; ?> rounded-xl flex items-center justify-center mb-4 text-xl <?php echo $color['hover']; ?> group-hover:text-white transition">
+                                    <i class="fa-solid <?php echo $icon; ?>"></i>
+                                </div>
+                                <h4 class="font-bold text-slate-800 text-lg mb-1"><?php echo htmlspecialchars($cat['category_name']); ?></h4>
+                                <p class="text-slate-500 text-xs leading-relaxed"><?php echo htmlspecialchars($cat['category_name']); ?> সিলেবাস অনুযায়ী বিষয়ভিত্তিক ও পূর্ণাঙ্গ প্রশ্নব্যাংক মডেল টেস্ট।</p>
                             </div>
-                            <h4 class="font-bold text-slate-800 text-lg mb-1">ব্যাংক জব নিয়োগ পরীক্ষা</h4>
-                            <p class="text-slate-500 text-xs leading-relaxed">সরকারি ও বেসরকারি সকল ব্যাংকের প্রিলি এবং স্পেশাল মডেল টেস্ট।</p>
-                        </div>
-                        <div class="mt-4 flex items-center justify-between text-xs text-emerald-600 font-semibold">
-                            <span>ব্যাংক ম্যাথ ও প্রশ্ন ব্যাংক</span>
-                            <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
-                        </div>
-                    </div>
-                </label>
-
-                <!-- 3. NTRCA Exam -->
-                <label class="relative cursor-pointer group">
-                    <input type="radio" name="exam_type" value="ntrca" class="peer sr-only">
-                    <div class="p-6 bg-white border-2 border-slate-200 rounded-2xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-md transition-all h-full flex flex-col justify-between">
-                        <div>
-                            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mb-4 text-xl group-hover:bg-amber-600 group-hover:text-white transition">
-                                <i class="fa-solid fa-graduation-cap"></i>
+                            <div class="mt-4 flex items-center justify-between text-xs <?php echo $color['text']; ?> font-semibold">
+                                <span>বিষয়ভিত্তিক পরীক্ষা</span>
+                                <i class="fa-solid fa-circle-check text-lg"></i>
                             </div>
-                            <h4 class="font-bold text-slate-800 text-lg mb-1">এনটিআরসিএ (NTRCA)</h4>
-                            <p class="text-slate-500 text-xs leading-relaxed">স্কুল, কলেজ ও মাদ্রাসা শিক্ষক নিবন্ধন প্রিলিমিনারি পরীক্ষা।</p>
                         </div>
-                        <div class="mt-4 flex items-center justify-between text-xs text-amber-600 font-semibold">
-                            <span>শিক্ষক নিবন্ধন স্পেশাল</span>
-                            <i class="fa-solid fa-circle-check text-amber-600 text-lg"></i>
-                        </div>
-                    </div>
-                </label>
-
+                    </label>
+                <?php 
+                        }
+                    } else {
+                        echo "<p class='text-slate-500 text-sm col-span-3 text-center'>কোনো ক্যাটাগরি পাওয়া যায়নি!</p>";
+                    }
+                ?>
             </div>
         </div>
 
@@ -138,7 +125,6 @@ Session::checkSession();
                 </div>
             </div>
 
-            <!-- ID added: payButton -->
             <button type="submit" id="payButton" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center space-x-2 text-base">
                 <span>পেমেন্ট করুন</span>
                 <i class="fa-solid fa-arrow-right text-sm"></i>
@@ -158,12 +144,12 @@ Session::checkSession();
             $('#totalAmount').text(price);
         });
 
-        // ২. ফর্ম সাবমিট হ্যান্ডলার (ডায়নামিক ভ্যালু পিক করবে)
+        // ২. ফর্ম সাবমিট হ্যান্ডলার (ডায়নামিক ভ্যালু পিক করবে)
         $("#subscriptionForm").submit(function(e){
             e.preventDefault();
 
-            // ইউজার কি সিলেক্ট করেছে তা ডায়নামিকালি রিড করা
-            var selectedExam = $("input[name='exam_type']:checked").val();
+            // সিলেক্টেড ক্যাটাগরি ID ও প্ল্যান নেওয়া
+            var selectedCategory = $("input[name='category_id']:checked").val();
             var selectedPlan = $("input[name='duration']:checked").val();
             var amount = $("input[name='duration']:checked").data('price');
 
@@ -171,7 +157,7 @@ Session::checkSession();
                 type: "POST",
                 url: "process_subscription.php",
                 data: {
-                    exam_type: selectedExam,
+                    category_id: selectedCategory,
                     plan: selectedPlan,
                     amount: amount
                 },

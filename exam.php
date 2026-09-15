@@ -4,12 +4,14 @@ Session::checkSession();
 
 $userId = Session::get("userid");
 
-// ইউজার অ্যাকাউন্ট সক্রিয় সাবস্ক্রিপশন চেক এবং মেয়াদের তথ্য সংগ্রহ
-$subQuery = "SELECT * FROM tbl_subscription 
-             WHERE user_id = '$userId' 
-             AND status = 'active' 
-             AND expire_date >= NOW() 
-             ORDER BY id DESC LIMIT 1";
+// JOIN Query দিয়ে ক্যাটাগরির নামসহ সাবস্ক্রিপশন ডাটা ফ্রেচ
+$subQuery = "SELECT s.*, c.category_name 
+             FROM tbl_subscription s 
+             LEFT JOIN tbl_category c ON s.category_id = c.id 
+             WHERE s.user_id = '$userId' 
+             AND s.status = 'active' 
+             AND s.expire_date >= NOW() 
+             ORDER BY s.id DESC LIMIT 1";
 
 $subData = $db->select($subQuery);
 
@@ -22,7 +24,7 @@ $subInfo = $subData->fetch_assoc();
 ?>
 
 <div class="w-full max-w-4xl mx-auto my-10 px-4">
-    
+
     <!-- Welcome Banner -->
     <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-3xl p-8 text-white shadow-xl mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
@@ -49,7 +51,7 @@ $subInfo = $subData->fetch_assoc();
                 </div>
                 <div>
                     <h3 class="font-bold text-slate-800 text-base">অ্যাক্টিভ সাবস্ক্রিপশন</h3>
-                    <p class="text-xs text-slate-500">আপনার বর্তমান প্যাকেজের মেয়াদ ও বিবরণ</p>
+                    <p class="text-xs text-slate-500">আপনার বর্তমান প্যাকেজের মেয়াদ ও বিবরণ</p>
                 </div>
             </div>
             <span class="bg-emerald-100 text-emerald-700 font-semibold text-xs px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
@@ -61,12 +63,27 @@ $subInfo = $subData->fetch_assoc();
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center md:text-left">
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <span class="text-[11px] text-slate-400 font-medium block uppercase">কোর্স/পরীক্ষা</span>
-                <span class="font-bold text-slate-800 uppercase text-sm"><?php echo htmlspecialchars($subInfo['exam_type']); ?></span>
+                <span class="font-bold text-slate-800 text-sm">
+                    <?php 
+                        // ডাইনামিক ক্যাটাগরি নেম প্রদর্শন
+                        echo !empty($subInfo['category_name']) ? htmlspecialchars($subInfo['category_name']) : 'সাধারণ পরীক্ষা'; 
+                    ?>
+                </span>
             </div>
-            
+
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <span class="text-[11px] text-slate-400 font-medium block uppercase">প্যাকেজ</span>
-                <span class="font-bold text-slate-800 text-sm"><?php echo str_replace('_', ' ', htmlspecialchars($subInfo['duration'])); ?></span>
+                <span class="font-bold text-slate-800 text-sm">
+                    <?php 
+                        $planMap = [
+                            '3_months' => '৩ মাস (ট্রায়াল)',
+                            '6_months' => '৬ মাস (স্ট্যান্ডার্ড)',
+                            '1_year'   => '১ বছর (প্রিমিয়াম)'
+                        ];
+                        $dur = $subInfo['duration'];
+                        echo isset($planMap[$dur]) ? $planMap[$dur] : str_replace('_', ' ', htmlspecialchars($dur)); 
+                    ?>
+                </span>
             </div>
 
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -75,7 +92,7 @@ $subInfo = $subData->fetch_assoc();
             </div>
 
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <span class="text-[11px] text-slate-400 font-medium block uppercase">মেয়াদ শেষ</span>
+                <span class="text-[11px] text-slate-400 font-medium block uppercase">মেয়াদ শেষ</span>
                 <span class="font-semibold text-indigo-600 text-xs"><?php echo date('d M Y', strtotime($subInfo['expire_date'])); ?></span>
             </div>
         </div>

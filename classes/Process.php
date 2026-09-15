@@ -14,29 +14,30 @@ class Process{
 		$this->fm = new Format();
 	}
 
-	public function processData($data, $step, $total) {
-    $selectedAns = isset($data['ans']) ? (int)$data['ans'] : 0;
-    $number      = (int)$data['number'];
+	public function processData($data){
+		$selectedAns    = $this->fm->validation($data['ans']);
+		$number         = $this->fm->validation($data['number']);
+		$selectedAns    = mysqli_real_escape_string($this->db->link,$selectedAns);
+		$number         = mysqli_real_escape_string($this->db->link,$number);
+		$next           = $number+1;
 
-    // সঠিক উত্তর চেক করা
-    $query = "SELECT * FROM tbl_ans WHERE quesNo = '$number' AND rightAns = '1'";
-    $getAns = $this->db->select($query)->fetch_assoc();
+		if (!isset($_SESSION['score'])) {
+			$_SESSION['score'] = '0';
+		}
 
-    if ($getAns && $getAns['id'] == $selectedAns) {
-        $score = Session::get("score");
-        Session::set("score", $score + 1);
-    }
+		$total = $this->getTotal();
+		$right = $this->rightAns($number);
+		if ($right == $selectedAns) {
+			$_SESSION['score']++;
+		}
+		if ($number == $total) {
+			header("Location:final.php");
+			exit();
+		}else{
+			header("Location:test.php?q=".$next);
+		}
 
-    // নেক্সট স্টেপ রিডাইরেকশন
-    $nextStep = $step + 1;
-    if ($nextStep > $total) {
-        header("Location: final.php");
-        exit();
-    } else {
-        header("Location: test.php?q=" . $nextStep);
-        exit();
-    }
-}
+	}
 
 	public function getLeaderboardByCategory($category_id) {
 		$category_id = mysqli_real_escape_string($this->db->link, $category_id);
@@ -68,6 +69,27 @@ class Process{
     $getdata = $this->db->select($query)->fetch_assoc();
     $result = $getdata['id'];
     return $result;
+	}
+
+	public function insertExamHistory() {
+		$userId       = Session::get("userId");
+		$categoryId   = Session::get("exam_category_id") ? Session::get("exam_category_id") : 1;
+		$totalQues    = Session::get("exam_total_ques");
+		$correctAns   = Session::get("score") ? Session::get("score") : 0;
+		$wrongAns     = $totalQues - $correctAns;
+		$totalMarks   = $correctAns; // যদি প্রতি প্রশ্নে ১ মার্ক হয়
+		$percentage   = ($totalQues > 0) ? ($correctAns / $totalQues) * 100 : 0;
+		$status       = ($percentage >= 40) ? 'Passed' : 'Failed';
+		
+		// ইউনিক অ্যাটেম্পট কোড জেনারেট
+		$attemptCode  = "EXM-" . date("Ymd") . "-" . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 4));
+
+		$query = "INSERT INTO tbl_exam_history 
+				(attempt_code, user_id, category_id, subject_id, total_questions, correct_answers, wrong_answers, total_marks, percentage, status) 
+				VALUES 
+				('$attemptCode', '$userId', '$categoryId', 1, '$totalQues', '$correctAns', '$wrongAns', '$totalMarks', '$percentage', '$status')";
+
+		return $this->db->insert($query);
 	}
 
 }

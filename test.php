@@ -19,7 +19,9 @@ $step = isset($_GET['q']) ? (int)$_GET['q'] : 1;
 
 if ($step < 1) {
     $step = 1;
-} elseif ($step > $total) {
+}
+
+if ($step > $total) {
     header("Location: final.php");
     exit();
 }
@@ -27,17 +29,33 @@ if ($step < 1) {
 // বর্তমান স্টেপের আসল প্রশ্ন নম্বর বের করা
 $quesNo = $examQuestions[$step - 1];
 
-// প্রশ্ন ও উত্তর ডাটাবেজ থেকে নিয়ে আসা
+// ==========================================
+// ফর্ম সাবমিট হ্যান্ডলিং ও পেজ নেভিগেশন (FIX)
+// ==========================================
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
+    $_POST['number'] = $quesNo; // মূল প্রশ্ন নম্বর প্রসেসে পাঠানো
+    
+    // Process Class দিয়ে স্কোর হিসাব/ডাটা সেভ করুন
+    if (isset($pro)) {
+        $pro->processData($_POST, $step, $total);
+    }
+
+    // পরবর্তী ধাপে যাওয়া বা পরীক্ষা শেষ করা
+    $nextStep = $step + 1;
+    if ($nextStep > $total) {
+        header("Location: final.php");
+        exit();
+    } else {
+        header("Location: test.php?q=" . $nextStep);
+        exit();
+    }
+}
+
+// প্রশ্ন ও উত্তর ডাটাবেজ থেকে নিয়ে আসা
 $question = $exm->getQuesByNumber($quesNo);
 $answer   = $exm->getAnswer($quesNo);
 
-// ফর্ম সাবমিট হ্যান্ডলিং
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $_POST['number'] = $quesNo; // মূল প্রশ্ন নম্বর প্রসেসে পাঠানো
-    $process = $pro->processData($_POST, $step, $total);
-}
-
-// সময় গণনার লজিক (Seconds)
+// সময় গণনার লজিক (Seconds)
 $elapsedTime = time() - $startTime;
 $totalSeconds = $timeLimit * 60;
 $remainingSeconds = max(0, $totalSeconds - $elapsedTime);
@@ -62,7 +80,7 @@ $remainingSeconds = max(0, $totalSeconds - $elapsedTime);
         <!-- Timer Display -->
         <div class="flex items-center gap-2 bg-slate-900 text-amber-400 px-4 py-2 rounded-xl text-sm font-bold shadow-inner">
             <i class="fa-solid fa-clock text-amber-400 animate-pulse"></i>
-            <span>অবশিষ্ট সময়: <span id="timer">--:--</span></span>
+            <span>অবশিষ্ট সময়: <span id="timer">--:--</span></span>
         </div>
     </div>
 
@@ -73,12 +91,12 @@ $remainingSeconds = max(0, $totalSeconds - $elapsedTime);
         <div class="bg-slate-50 border-b border-slate-100 p-6">
             <h3 class="text-base sm:text-lg font-bold text-slate-800 leading-relaxed">
                 <span class="text-indigo-600 font-black mr-1">Q<?php echo $step; ?>.</span> 
-                <?php echo htmlspecialchars($question['ques']); ?>
+                <?php echo htmlspecialchars($question['ques'] ?? ''); ?>
             </h3>
         </div>
 
         <!-- Options Form -->
-        <form method="post" action="" class="p-6">
+        <form method="post" action="test.php?q=<?php echo $step; ?>" class="p-6">
             <div class="space-y-3 mb-8">
                 <?php 
                     if ($answer) {
@@ -122,7 +140,7 @@ $remainingSeconds = max(0, $totalSeconds - $elapsedTime);
             `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
         if (timeLeft <= 0) {
-            alert('আপনার নির্ধারিত সময় শেষ হয়ে গেছে!');
+            alert('আপনার নির্ধারিত সময় শেষ হয়ে গেছে!');
             window.location.href = 'final.php';
         } else {
             timeLeft--;
