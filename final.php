@@ -15,7 +15,7 @@ $userId = Session::get("userid") ? Session::get("userid") : Session::get("userId
 
 $attemptCode = false;
 
-// ডাটাবেজে হিস্ট্রি সেভ করা (যদি মোট প্রশ্ন ০-এর বেশি থাকে)
+// ডাটাবেজে হিস্ট্রি সেভ করা (যদি মোট প্রশ্ন ০-এর বেশি থাকে)//
 if ($total > 0 && $userId && method_exists($exm, 'saveExamResult')) {
     $attemptCode = $exm->saveExamResult($userId, $categoryId, $subjectId, $total, $score, $wrong);
 }

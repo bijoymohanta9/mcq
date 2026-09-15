@@ -46,10 +46,10 @@
                 <td class="py-4 px-4">
                    <!-- লাইন ৪৭ ও ৪৮ এভাবে আপডেট করুন -->
                     <h4 class="font-bold text-slate-800">
-                        <?php echo htmlspecialchars($data['subject_name'] ?? 'সাধারণ পরীক্ষা'); ?>
+                        <?php echo htmlspecialchars($row['subject_name'] ?? 'সাধারণ পরীক্ষা'); ?>
                     </h4>
                     <p class="text-xs text-slate-500">
-                        <?php echo htmlspecialchars($data['category_name'] ?? 'সকল ক্যাটাগরি'); ?>
+                        <?php echo htmlspecialchars($row['category_name'] ?? 'সকল ক্যাটাগরি'); ?>
                     </p>
                 </td>
                 <td class="py-4 px-4 text-slate-500">

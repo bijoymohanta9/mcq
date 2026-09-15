@@ -57,6 +57,36 @@ class Exam{
     }
 }
 
+public function saveExamResult($userId, $categoryId, $subjectId, $total, $score, $wrong) {
+    $userId      = (int)$this->fm->validation($userId);
+    $categoryId  = (int)$this->fm->validation($categoryId);
+    $subjectId   = (int)$this->fm->validation($subjectId);
+    $total       = (int)$this->fm->validation($total);
+    $score       = (int)$this->fm->validation($score);
+    $wrong       = (int)$this->fm->validation($wrong);
+
+    $marks       = $score;
+    $percentage  = ($total > 0) ? round(($score / $total) * 100, 2) : 0;
+    $status      = ($percentage >= 40) ? 'Passed' : 'Failed';
+    $examDate    = date("Y-m-d H:i:s");
+
+    // ট্র্যাকিং আইডির জন্য ইউনিক কোড জেনারেট (যেমন: EXM-20260915-A1B2)
+    $attemptCode = "EXM-" . date("Ymd") . "-" . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 4));
+
+    $query = "INSERT INTO tbl_exam_history 
+              (attempt_code, user_id, category_id, subject_id, total_questions, correct_answers, wrong_answers, total_marks, percentage, status, exam_date) 
+              VALUES 
+              ('$attemptCode', '$userId', '$categoryId', '$subjectId', '$total', '$score', '$wrong', '$marks', '$percentage', '$status', '$examDate')";
+
+    $inserted = $this->db->insert($query);
+
+    if ($inserted) {
+        return $attemptCode;
+    } else {
+        return false;
+    }
+}
+
   // সফট ডিলিট করার জন্য (DELETE কোয়েরির বদলে UPDATE কোয়েরি)
 public function delQuestion($quesno) {
     $quesno = mysqli_real_escape_string($this->db->link, $quesno);
