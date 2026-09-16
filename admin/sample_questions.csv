@@ -1,0 +1,6 @@
+﻿category_id,subject_id,ques,ans1,ans2,ans3,ans4,rightAns
+5,5,HTML এর পূর্ণরূপ কী?,Hyper Text Markup Language,High Text Markup Language,Hyper Text Makeup Language,None,1
+5,5,PHP কোন ধরনের ল্যাঙ্গুয়েজ?,Client-side,Server-side,Database,Markup,2
+5,5,JS কোন ধরনের ল্যাঙ্গুয়েজ?,Client-side,Server-side,Database,Markup,1
+5,5,SQL কোন ধরনের ল্যাঙ্গুয়েজ?,Client-side,Server-side,Database,Markup,3
+5,5,JAVA কোন ধরনের ল্যাঙ্গুয়েজ?,Client-side,Server-side,Database,Programming,4

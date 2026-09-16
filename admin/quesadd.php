@@ -7,7 +7,7 @@
     include_once '../classes/Exam.php';
     $exm = new Exam();
 
-    // ১. সিঙ্গেল প্রশ্ন ম্যানুয়ালি যুক্ত করার হ্যান্ডলার
+    // ১. সিঙ্গেল প্রশ্ন ম্যানুয়ালি যুক্ত করার হ্যান্ডলার
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['single_add'])) {
         $addQue = $exm->addQuestions($_POST);
         $_SESSION['msg'] = $addQue;
@@ -45,7 +45,7 @@
     <!-- Page Header -->
     <div>
         <h1 class="text-2xl font-black text-slate-800 tracking-tight">নতুন প্রশ্ন যুক্ত করুন</h1>
-        <p class="text-slate-500 text-xs mt-1">ম্যানুয়ালি ফরম পুরণ করে অথবা CSV ফাইল আপলোড করে একসাথে একাধিক প্রশ্ন এন্ট্রি দিন</p>
+        <p class="text-slate-500 text-xs mt-1">ম্যানুয়ালি ফরম পুরণ করে অথবা CSV ফাইল আপলোড করে একসাথে একাধিক প্রশ্ন এন্ট্রি দিন</p>
     </div>
 
     <!-- Alert Messages -->
@@ -56,8 +56,8 @@
     <?php endif; ?>
 
     <!-- Bulk CSV/Excel Import Section -->
-    <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border border-emerald-200/80 rounded-2xl p-6 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
+    <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border border-emerald-200/80 rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-200/60 pb-4">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-emerald-600/10 flex items-center justify-center text-emerald-600">
                     <i class="fa-solid fa-file-csv text-xl"></i>
@@ -67,8 +67,15 @@
                     <p class="text-[11px] text-slate-500">Excel থেকে `.csv` ফরম্যাটে সেভ করে একসাথে একাধিক প্রশ্ন ইম্পোর্ট করুন</p>
                 </div>
             </div>
+
+            <!-- Sample CSV Download Button -->
+            <a href="sample_questions.csv" download class="inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-bold text-emerald-700 bg-white border border-emerald-300 rounded-xl hover:bg-emerald-50 hover:border-emerald-400 transition shadow-sm whitespace-nowrap">
+                <i class="fa-solid fa-download text-emerald-600"></i>
+                <span>Sample CSV ডাউনলোড</span>
+            </a>
         </div>
 
+        <!-- Import Form -->
         <form action="quesadd.php" method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-center gap-3">
             <input type="file" name="csv_file" accept=".csv" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 transition cursor-pointer bg-white rounded-xl border border-slate-200 p-1">
             <button type="submit" name="bulk_import" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2 whitespace-nowrap">
@@ -76,6 +83,56 @@
                 <span>ইম্পোর্ট করুন</span>
             </button>
         </form>
+
+        <!-- CSV Format Instructions & Preview Table -->
+        <div class="pt-2">
+            <div class="flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-circle-info text-emerald-600 text-xs"></i>
+                <h3 class="text-xs font-bold text-slate-700">CSV ফাইল কলাম ফরম্যাট ডেমো:</h3>
+            </div>
+            
+            <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-inner">
+                <table class="w-full text-xs text-left text-slate-600">
+                    <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                        <tr>
+                            <th class="px-3 py-2 border-r border-slate-200 font-mono">category_id</th>
+                            <th class="px-3 py-2 border-r border-slate-200 font-mono">subject_id</th>
+                            <th class="px-3 py-2 border-r border-slate-200 font-mono">ques</th>
+                            <th class="px-3 py-2 border-r border-slate-200 font-mono">ans1</th>
+                            <th class="px-3 py-2 border-r border-slate-200 font-mono">ans2</th>
+                            <th class="px-3 py-2 border-r border-slate-200 font-mono">ans3</th>
+                            <th class="px-3 py-2 border-r border-slate-200 font-mono">ans4</th>
+                            <th class="px-3 py-2 font-mono">rightAns</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-mono text-[11px]">
+                        <tr>
+                            <td class="px-3 py-2 border-r border-slate-100">5</td>
+                            <td class="px-3 py-2 border-r border-slate-100">5</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans min-w-[140px]">HTML এর পূর্ণরূপ কী?</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans">Hyper Text Markup...</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans">High Text Markup...</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans">Hyper Text Makeup...</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans">None</td>
+                            <td class="px-3 py-2 font-bold text-emerald-600">1</td>
+                        </tr>
+                        <tr>
+                            <td class="px-3 py-2 border-r border-slate-100">5</td>
+                            <td class="px-3 py-2 border-r border-slate-100">5</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans min-w-[140px]">PHP কোন ধরনের ল্যাঙ্গুয়েজ?</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans">Client-side</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans">Server-side</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans">Database</td>
+                            <td class="px-3 py-2 border-r border-slate-100 font-sans">Markup</td>
+                            <td class="px-3 py-2 font-bold text-emerald-600">2</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">
+                <b>নোট:</b> <code class="bg-slate-200/60 px-1 py-0.5 rounded text-slate-700">rightAns</code> কলামে সঠিক উত্তরের ক্রমানুমিক নম্বর (যেমন: ১, ২, ৩ অথবা ৪) দিতে হবে।
+            </p>
+        </div>
     </div>
 
     <!-- Manual Form Card -->
