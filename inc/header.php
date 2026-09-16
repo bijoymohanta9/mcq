@@ -30,7 +30,7 @@
     header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,16 +44,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/main.css">
     
     <script src="js/jquery.js"></script>
     <script src="js/main.js"></script>
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans text-slate-800">
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between text-slate-800">
 
     <!-- Main Navigation Header -->
     <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
             
             <!-- Logo / Brand -->
             <a href="index.php" class="flex items-center space-x-3">
@@ -62,47 +67,52 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold text-slate-900 tracking-tight leading-none">Online Exam System</h1>
-                    <span class="text-xs text-slate-500">PHP OOP & MySQLi</span>
+                    <span class="text-xs text-slate-500">Job Prep & Assessment</span>
                 </div>
             </a>
 
             <!-- Navigation Links & User Welcome -->
             <div class="flex items-center space-x-4">
                 <nav class="flex items-center space-x-1 sm:space-x-2">
+                    <!-- Job Circular Link for All Users -->
+                    <a href="circulars.php" class="px-3 py-2 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-briefcase text-indigo-500"></i> সরকারি সার্কুলার
+                    </a>
+
                     <?php
                     $login = Session::get("login");
                     if ($login == true) { ?>
-                        <a href="profile.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
+                        <a href="profile.php" class="px-3 py-2 text-xs font-semibold text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
                             <i class="fa-regular fa-user text-slate-400"></i> Profile
                         </a>
-                        <a href="exam.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
+                        <a href="exam.php" class="px-3 py-2 text-xs font-semibold text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
                             <i class="fa-solid fa-file-pen text-slate-400"></i> Take Exam
                         </a>
 
-                        <a href="exam_history.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
+                        <a href="exam_history.php" class="px-3 py-2 text-xs font-semibold text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
                             <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Exam Records
                         </a>
 
                         <!-- My Subscriptions -->
-                        <a href="my_subscriptions.php" class="px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
+                        <a href="my_subscriptions.php" class="px-3 py-2 text-xs font-semibold text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition flex items-center gap-1.5">
                             <i class="fa-solid fa-gem text-amber-500"></i> Subscriptions
                         </a>
 
                         <!-- Buy Subscription Button -->
-                        <a href="subscription.php" class="px-3.5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-sm flex items-center gap-1.5">
+                        <a href="subscription.php" class="px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-sm flex items-center gap-1.5">
                             <i class="fa-solid fa-cart-shopping"></i> Buy Plan
                         </a>
 
-                        <a href="leaderboard.php" class="px-3.5 py-2 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl transition shadow-sm flex items-center gap-1.5">
+                        <a href="leaderboard.php" class="px-3 py-2 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl transition shadow-sm flex items-center gap-1.5">
                             <i class="fa-solid fa-trophy"></i> Leaderboard
                         </a>
                         
-                        <a href="?action=logout" class="px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition flex items-center gap-1.5">
+                        <a href="?action=logout" class="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition flex items-center gap-1.5">
                             <i class="fa-solid fa-right-from-bracket"></i> Logout
                         </a>
                     <?php } else { ?>
-                        <a href="register.php" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition">Register</a>
-                        <a href="index.php" class="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition">Login</a>
+                        <a href="register.php" class="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-indigo-600 transition">Register</a>
+                        <a href="index.php" class="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition">Login</a>
                     <?php } ?>
                 </nav>
 

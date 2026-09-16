@@ -42,7 +42,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Brand Logo -->
-                <div class="flex items-center space-x-3">
+                <a href="index.php" class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-600/30">
                         <i class="fa-solid fa-graduation-cap"></i>
                     </div>
@@ -50,32 +50,41 @@
                         <span class="text-white font-bold text-base tracking-wide block">Admin Portal</span>
                         <span class="text-slate-400 text-[11px] -mt-1 block">Online Exam System</span>
                     </div>
-                </div>
+                </a>
 
                 <!-- Navigation Links -->
                 <nav class="hidden md:flex items-center space-x-1">
-                    <a href="index.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                    <a href="index.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-house"></i> Home
                     </a>
-                    <a href="users.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-users"></i> Manage User
+                    <a href="users.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-users"></i> Users
                     </a>
-                    <a href="add_category_subject.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-users"></i> Add Category & Subjects
+                    <a href="add_category_subject.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-layer-group"></i> Category & Subject
                     </a>
-                    <a href="quesadd.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                    <a href="quesadd.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-plus-circle"></i> Add Ques
                     </a>
-                    <a href="queslist.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                    <a href="queslist.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-list-check"></i> Ques List
                     </a>
-                    <a href="subscriptions.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-list-check"></i> Subscriptions
+
+                    <!-- Circular Management Links -->
+                    <a href="circular_add.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-indigo-300 hover:text-white hover:bg-indigo-950/50 transition flex items-center gap-1.5 border border-indigo-500/20">
+                        <i class="fa-solid fa-file-circle-plus"></i> Add Circular
                     </a>
-                    <a href="leaderboard.php" class="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                    <a href="circular_list.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-indigo-300 hover:text-white hover:bg-indigo-950/50 transition flex items-center gap-1.5 border border-indigo-500/20">
+                        <i class="fa-solid fa-briefcase"></i> Circular List
+                    </a>
+
+                    <a href="subscriptions.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-gem text-amber-400"></i> Subscriptions
+                    </a>
+                    <a href="leaderboard.php" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i class="fa-solid fa-trophy text-amber-400"></i> Leaderboard
                     </a>
-                    <a href="?action=logout" class="ml-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-600/80 transition flex items-center gap-1.5 border border-rose-500/20">
+                    <a href="?action=logout" class="ml-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-600/80 transition flex items-center gap-1.5 border border-rose-500/20">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
                     </a>
                 </nav>

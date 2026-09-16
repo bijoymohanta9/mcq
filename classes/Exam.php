@@ -123,6 +123,47 @@ public function importBulkQuestions($fileData) {
     }
 }
 
+// নতুন জব সার্কুলার যোগ করার মেথড
+public function addCircular($data) {
+    $category_id  = $this->db->link->real_escape_string($data['category_id']);
+    $title        = $this->db->link->real_escape_string($data['title']);
+    $organization = $this->db->link->real_escape_string($data['organization']);
+    $vacancy      = $this->db->link->real_escape_string($data['vacancy']);
+    $deadline     = $this->db->link->real_escape_string($data['deadline']);
+    $apply_url    = $this->db->link->real_escape_string($data['apply_url']);
+    $pdf_url      = $this->db->link->real_escape_string($data['pdf_url']);
+
+    if (empty($category_id) || empty($title) || empty($organization) || empty($deadline) || empty($apply_url)) {
+        return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>আবশ্যকীয় ফিল্ডগুলো পূরণ করুন!</div>";
+    }
+
+    $query = "INSERT INTO tbl_circular(category_id, title, organization, vacancy, deadline, apply_url, pdf_url) 
+              VALUES('$category_id', '$title', '$organization', '$vacancy', '$deadline', '$apply_url', '$pdf_url')";
+    
+    $insert_row = $this->db->insert($query);
+    if ($insert_row) {
+        return "<div class='p-4 mb-4 text-xs text-emerald-700 bg-emerald-100 rounded-xl font-bold'>সার্কুলার সফলভাবে যুক্ত হয়েছে!</div>";
+    } else {
+        return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>সার্কুলার যুক্ত করা সম্ভব হয়নি।</div>";
+    }
+}
+
+// ফ্রন্টএন্ডের জন্য সকল রানিং সার্কুলার ফেচ করার মেথড
+public function getActiveCirculars($cat_id = null) {
+    $where = "WHERE c.status = 1 AND c.deadline >= CURDATE()";
+    if ($cat_id) {
+        $cat_id = $this->db->link->real_escape_string($cat_id);
+        $where .= " AND c.category_id = '$cat_id'";
+    }
+
+    $query = "SELECT c.*, cat.category_name 
+              FROM tbl_circular c 
+              JOIN tbl_category cat ON c.category_id = cat.id 
+              $where 
+              ORDER BY c.deadline ASC";
+    return $this->db->select($query);
+}
+
 public function saveExamResult($userId, $categoryId, $subjectId, $total, $score, $wrong) {
     $userId      = (int)$this->fm->validation($userId);
     $categoryId  = (int)$this->fm->validation($categoryId);
@@ -518,6 +559,28 @@ public function updateSubscriptionStatus($sub_id, $status, $duration) {
         return "<div class='p-3 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200 font-bold'>Failed to update: " . $this->db->link->error . "</div>";
     }
 }
+
+// সকল সার্কুলার পাওয়ার মেথড (অ্যাডমিনের জন্য)
+public function getAllCirculars() {
+    $query = "SELECT c.*, cat.category_name 
+              FROM tbl_circular c 
+              JOIN tbl_category cat ON c.category_id = cat.id 
+              ORDER BY c.id DESC";
+    return $this->db->select($query);
+}
+
+// সার্কুলার মুছে ফেলার মেথড
+public function deleteCircular($id) {
+    $id = $this->db->link->real_escape_string($id);
+    $query = "DELETE FROM tbl_circular WHERE id = '$id'";
+    $delData = $this->db->delete($query);
+    if ($delData) {
+        return "<div class='p-4 mb-4 text-xs text-emerald-700 bg-emerald-100 rounded-xl font-bold'>সার্কুলার সফলভাবে মুছে ফেলা হয়েছে!</div>";
+    } else {
+        return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>মুছে ফেলা সম্ভব হয়নি।</div>";
+    }
+}
+
 }
 
 
