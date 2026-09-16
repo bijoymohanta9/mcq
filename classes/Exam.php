@@ -59,6 +59,70 @@ public function addQuestions($data) {
     }
 }
 
+public function importBulkQuestions($fileData) {
+    if (!isset($fileData['csv_file']) || $fileData['csv_file']['error'] != 0) {
+        return "<div class='p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold'>সঠিক CSV ফাইল আপলোড করুন!</div>";
+    }
+
+    $fileName = $fileData['csv_file']['tmp_name'];
+    $fileSize = $fileData['csv_file']['size'];
+
+    if ($fileSize > 0) {
+        $file = fopen($fileName, "r");
+        
+        // CSV-এর প্রথম লাইন (Header) স্কিপ করা
+        fgetcsv($file);
+
+        $insertedCount = 0;
+
+        while (($column = fgetcsv($file, 10000, ",")) !== FALSE) {
+            if (empty(array_filter($column))) {
+                continue;
+            }
+
+            $category_id = isset($column[0]) ? mysqli_real_escape_string($this->db->link, trim($column[0])) : '';
+            $subject_id  = isset($column[1]) ? mysqli_real_escape_string($this->db->link, trim($column[1])) : '';
+            $ques        = isset($column[2]) ? mysqli_real_escape_string($this->db->link, trim($column[2])) : '';
+            $ans1        = isset($column[3]) ? mysqli_real_escape_string($this->db->link, trim($column[3])) : '';
+            $ans2        = isset($column[4]) ? mysqli_real_escape_string($this->db->link, trim($column[4])) : '';
+            $ans3        = isset($column[5]) ? mysqli_real_escape_string($this->db->link, trim($column[5])) : '';
+            $ans4        = isset($column[6]) ? mysqli_real_escape_string($this->db->link, trim($column[6])) : '';
+            $rightAns    = isset($column[7]) ? mysqli_real_escape_string($this->db->link, trim($column[7])) : '';
+
+            if (!empty($ques) && !empty($ans1) && !empty($ans2) && !empty($rightAns)) {
+                
+                // ১. মূল প্রশ্ন ইনসার্ট
+                $query = "INSERT INTO tbl_ques(category_id, subject_id, ques) VALUES('$category_id', '$subject_id', '$ques')";
+                $insert_row = $this->db->insert($query);
+
+                if ($insert_row) {
+                    // নতুন তৈরি হওয়া প্রশ্নের ID নেওয়া (যেটি tbl_ans এর quesNo হিসেবে বসবে)
+                    $quesNo = $this->db->link->insert_id;
+                    $options = array(1 => $ans1, 2 => $ans2, 3 => $ans3, 4 => $ans4);
+
+                    foreach ($options as $key => $option_name) {
+                        if ($option_name !== '') {
+                            $right_val = ($rightAns == $key) ? '1' : '0';
+                            
+                            // ডাটাবেজের কলাম অনুযায়ী: quesNo, rightAns, ans
+                            $ansQuery = "INSERT INTO tbl_ans(quesNo, rightAns, ans) VALUES('$quesNo', '$right_val', '$option_name')";
+                            $this->db->insert($ansQuery);
+                        }
+                    }
+                    $insertedCount++;
+                }
+            }
+        }
+        fclose($file);
+
+        if ($insertedCount > 0) {
+            return "<div class='p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold'>সফলভাবে মোট {$insertedCount} টি প্রশ্ন ইম্পোর্ট করা হয়েছে!</div>";
+        } else {
+            return "<div class='p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold'>কোনো ডাটা ইম্পোর্ট করা সম্ভব হয়নি। ফাইলের ফরম্যাট যাচাই করুন।</div>";
+        }
+    }
+}
+
 public function saveExamResult($userId, $categoryId, $subjectId, $total, $score, $wrong) {
     $userId      = (int)$this->fm->validation($userId);
     $categoryId  = (int)$this->fm->validation($categoryId);
