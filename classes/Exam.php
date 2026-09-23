@@ -492,11 +492,15 @@ public function getSubjectsWithQuestions($category_id = 0) {
 
   }
 
-  public function getAnswer($number){
-    $query = "SELECT * FROM tbl_ans WHERE quesNo ='$number'";
-    $getData = $this->db->select($query);
-    return $getData;
-  }
+  public function getAnswer($quesId) {
+    $quesId = mysqli_real_escape_string($this->db->link, $quesId);
+    
+    // যদি আপনার অপশন টেবিলে (tbl_ans) কলামের নাম quesNo এর জায়গায় ques_id বা id হয়,
+    // তবে নিচের 'quesNo' পরিবর্তন করে সঠিক কলাম নাম লিখুন:
+    $query  = "SELECT * FROM tbl_ans WHERE quesNo = '$quesId'";
+    $result = $this->db->select($query);
+    return $result;
+}
 
   // ক্যাটাগরি ও সাবজেক্ট সেভ করার মেথড
     public function addCategory($category_name) {

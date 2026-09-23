@@ -2,7 +2,7 @@
 include 'inc/header.php';
 Session::checkSession();
 
-// সেশন থেকে ইউজারের সিলেক্ট করা উত্তরসমূহ লোড করা
+// সেশন থেকে ইউজারের সিলেক্ট করা উত্তরসমূহ ও প্রশ্ন লোড করা
 $userAnswers   = Session::get("user_ans") ? Session::get("user_ans") : [];
 $examQuestions = Session::get("exam_questions");
 
@@ -17,7 +17,7 @@ $total      = null;
 if (!empty($attemptCode)) {
     $historyQuery = "SELECT total_questions, category_id, subject_id FROM tbl_exam_history WHERE attempt_code = '$attemptCode'";
     $historyData  = $db->select($historyQuery);
-    if ($historyData) {
+    if ($historyData && $historyData->num_rows > 0) {
         $hRow       = $historyData->fetch_assoc();
         $total      = (int)$hRow['total_questions'];
         $categoryId = (int)$hRow['category_id'];
@@ -60,15 +60,19 @@ if (!$total) {
     <!-- Questions Container -->
     <div class="space-y-6 mb-8">
         <?php 
-            // অপশন A: যদি সেশনে পরীক্ষার প্রশ্ন আইডি সংরক্ষিত থাকে
-            if ($examQuestions && !empty($examQuestions)) {
+            // অপশন A: যদি সেশনে পরীক্ষার প্রশ্ন সংরক্ষিত থাকে
+            if ($examQuestions && is_array($examQuestions) && count($examQuestions) > 0) {
                 $count = 0;
-                foreach ($examQuestions as $quesNo) {
+                foreach ($examQuestions as $key => $quesNo) {
                     $count++;
+                    
+                    // এখানে getQuesByNumber যদি প্রশ্ন রিটার্ন করে
                     $question = $exm->getQuesByNumber($quesNo);
-                    $selectedAnsId = isset($userAnswers[$quesNo]) ? $userAnswers[$quesNo] : null;
 
                     if ($question) {
+                        // প্রশ্নের মূল আইডি নির্ধারণ (id অথবা quesNo)
+                        $realQuesId    = isset($question['id']) ? $question['id'] : (isset($question['quesNo']) ? $question['quesNo'] : $quesNo);
+                        $selectedAnsId = isset($userAnswers[$quesNo]) ? $userAnswers[$quesNo] : (isset($userAnswers[$realQuesId]) ? $userAnswers[$realQuesId] : null);
         ?>
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <!-- Question Title Header -->
@@ -82,22 +86,29 @@ if (!$total) {
                 <!-- Answer List -->
                 <div class="p-5 space-y-2.5">
                     <?php 
-                        $answer = $exm->getAnswer($quesNo);
-                        if ($answer) {
+                        // ডাটাবেজের প্রকৃত কলাম আইডির ওপর ভিত্তি করে অপশন আনা
+                        $answer = $exm->getAnswer($realQuesId);
+                        
+                        // যদি $realQuesId দিয়ে না পায়, তবে $quesNo দিয়ে ফলব্যাক খোঁজা
+                        if (!$answer || $answer->num_rows == 0) {
+                            $answer = $exm->getAnswer($quesNo);
+                        }
+
+                        if ($answer && $answer->num_rows > 0) {
                             while ($result = $answer->fetch_assoc()) {
                                 $isRight    = ($result['rightAns'] == '1');
                                 $isSelected = ($selectedAnsId == $result['id']);
 
-                                $cardStyle = "border-slate-100 text-slate-600";
+                                $cardStyle = "border-slate-100 text-slate-600 bg-slate-50/50";
                                 if ($isRight) {
-                                    $cardStyle = "border-emerald-300 bg-emerald-50/60 text-emerald-900 font-semibold";
+                                    $cardStyle = "border-emerald-300 bg-emerald-50/70 text-emerald-900 font-semibold";
                                 } elseif ($isSelected && !$isRight) {
-                                    $cardStyle = "border-rose-300 bg-rose-50/60 text-rose-900 font-semibold";
+                                    $cardStyle = "border-rose-300 bg-rose-50/70 text-rose-900 font-semibold";
                                 }
                     ?>
                         <div class="flex items-center justify-between p-3.5 rounded-xl border transition <?php echo $cardStyle; ?>">
                             <div class="flex items-center gap-3">
-                                <div class="w-5 h-5 rounded-full border flex items-center justify-center text-[10px] <?php echo $isRight ? 'border-emerald-600 bg-emerald-600 text-white' : ($isSelected ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300'); ?>">
+                                <div class="w-5 h-5 rounded-full border flex items-center justify-center text-[10px] <?php echo $isRight ? 'border-emerald-600 bg-emerald-600 text-white' : ($isSelected ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300 bg-white'); ?>">
                                     <?php if ($isRight): ?>
                                         <i class="fa-solid fa-check"></i>
                                     <?php elseif ($isSelected): ?>
@@ -125,7 +136,9 @@ if (!$total) {
                         </div>
                     <?php 
                             }
-                        } 
+                        } else {
+                            echo "<p class='text-xs text-rose-500 italic p-2'>কোনো উত্তর পাওয়া যায়নি!</p>";
+                        }
                     ?>
                 </div>
             </div>
@@ -145,13 +158,15 @@ if (!$total) {
                 $whereClause = "WHERE " . implode(" AND ", $conditions);
                 $limitClause = $total ? "LIMIT $total" : "";
 
-                $getQues = $db->select("SELECT * FROM tbl_ques $whereClause ORDER BY quesNo ASC $limitClause");
+                $getQues = $db->select("SELECT * FROM tbl_ques $whereClause ORDER BY id ASC $limitClause");
 
-                if ($getQues) {
+                if ($getQues && $getQues->num_rows > 0) {
                     $count = 0;
                     while ($question = $getQues->fetch_assoc()) {
                         $count++;
-                        $quesNo = $question['quesNo'];
+                        
+                        $realQuesId    = isset($question['id']) ? $question['id'] : $question['quesNo'];
+                        $selectedAnsId = isset($userAnswers[$realQuesId]) ? $userAnswers[$realQuesId] : null;
         ?>
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="bg-slate-50 border-b border-slate-100 p-5">
@@ -162,34 +177,64 @@ if (!$total) {
                 </div>
                 <div class="p-5 space-y-2.5">
                     <?php 
-                        $answer = $exm->getAnswer($quesNo);
-                        if ($answer) {
+                        $answer = $exm->getAnswer($realQuesId);
+                        
+                        if (!$answer || $answer->num_rows == 0) {
+                            $answer = $exm->getAnswer($question['quesNo']);
+                        }
+
+                        if ($answer && $answer->num_rows > 0) {
                             while ($result = $answer->fetch_assoc()) {
-                                $isRight = ($result['rightAns'] == '1');
+                                $isRight    = ($result['rightAns'] == '1');
+                                $isSelected = ($selectedAnsId == $result['id']);
+
+                                $cardStyle = "border-slate-100 text-slate-600 bg-slate-50/50";
+                                if ($isRight) {
+                                    $cardStyle = "border-emerald-300 bg-emerald-50/70 text-emerald-900 font-semibold";
+                                } elseif ($isSelected && !$isRight) {
+                                    $cardStyle = "border-rose-300 bg-rose-50/70 text-rose-900 font-semibold";
+                                }
                     ?>
-                        <div class="flex items-center justify-between p-3.5 rounded-xl border transition <?php echo $isRight ? 'border-emerald-300 bg-emerald-50/50 text-emerald-900 font-semibold' : 'border-slate-100 text-slate-600'; ?>">
+                        <div class="flex items-center justify-between p-3.5 rounded-xl border transition <?php echo $cardStyle; ?>">
                             <div class="flex items-center gap-3">
-                                <div class="w-5 h-5 rounded-full border flex items-center justify-center text-[10px] <?php echo $isRight ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'; ?>">
-                                    <?php if ($isRight) { ?><i class="fa-solid fa-check"></i><?php } ?>
+                                <div class="w-5 h-5 rounded-full border flex items-center justify-center text-[10px] <?php echo $isRight ? 'border-emerald-600 bg-emerald-600 text-white' : ($isSelected ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300 bg-white'); ?>">
+                                    <?php if ($isRight): ?>
+                                        <i class="fa-solid fa-check"></i>
+                                    <?php elseif ($isSelected): ?>
+                                        <i class="fa-solid fa-xmark"></i>
+                                    <?php endif; ?>
                                 </div>
                                 <span class="text-xs sm:text-sm">
                                     <?php echo htmlspecialchars($result['ans']); ?>
                                 </span>
                             </div>
-                            <?php if ($isRight) { ?>
-                                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800">
-                                    সঠিক উত্তর
-                                </span>
-                            <?php } ?>
+
+                            <div class="flex items-center gap-2">
+                                <?php if ($isSelected): ?>
+                                    <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full <?php echo $isRight ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'; ?>">
+                                        আপনার উত্তর
+                                    </span>
+                                <?php endif; ?>
+
+                                <?php if ($isRight): ?>
+                                    <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">
+                                        সঠিক উত্তর
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     <?php 
                             }
-                        } 
+                        } else {
+                            echo "<p class='text-xs text-rose-500 italic p-2'>কোনো উত্তর পাওয়া যায়নি!</p>";
+                        }
                     ?>
                 </div>
             </div>
         <?php 
                     }
+                } else {
+                    echo "<div class='bg-white p-8 rounded-2xl text-center border border-slate-200 text-slate-500'>কোনো প্রশ্ন খুঁজে পাওয়া যায়নি।</div>";
                 }
             } 
         ?>
