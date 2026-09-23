@@ -165,7 +165,15 @@
                                 <?php echo $row['total_score']; ?> pts
                             </td>
                             <td class="py-4 px-6 text-right">
-                                <a href="user_details.php?id=<?php echo isset($row['user_id']) ? $row['user_id'] : ''; ?>" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded-xl font-bold transition text-[11px]">
+                                <?php 
+                                    // Array অথবা Object যেভাবে ডাটা আসুক, user_id বা userId খুঁজে বের করবে
+                                    if (is_array($row)) {
+                                        $candidateId = $row['user_id'] ?? $row['userId'] ?? $row['userid'] ?? 0;
+                                    } else {
+                                        $candidateId = $row->user_id ?? $row->userId ?? $row->userid ?? 0;
+                                    }
+                                ?>
+                                <a href="user_details.php?id=<?php echo $candidateId; ?>" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded-xl font-bold transition text-[11px]">
                                     <i class="fa-solid fa-eye"></i> View Profile
                                 </a>
                             </td>

@@ -295,20 +295,24 @@ public function getUserExamHistory($userId) {
     return $result;
 }
 
- public function getLeaderboardByCategory($category_id) {
-    $category_id = mysqli_real_escape_string($this->db->link, $category_id);
+public function getLeaderboardByCategory($category_id = 0) {
+    $category_id = (int)$category_id;
 
-    // tbl_score এর বদলে tbl_exam_history টেবিল ব্যবহার করা হলো
-    // যেখানে user_id দিয়ে join হচ্ছে এবং total_marks ও attempt গুণ করা হচ্ছে
-    $query = "SELECT u.name, u.email, 
-                    SUM(h.total_marks) as total_score, 
-                    COUNT(h.id) as total_attempt 
-             FROM tbl_exam_history h 
-             INNER JOIN tbl_user u ON h.user_id = u.userId 
-             WHERE h.category_id = '$category_id' 
-             GROUP BY h.user_id 
-             ORDER BY total_score DESC, total_attempt ASC 
-             LIMIT 10";
+    $whereClause = "";
+    if ($category_id > 0) {
+        $whereClause = "WHERE h.category_id = '$category_id'";
+    }
+
+    // u.userId AS user_id explicitly Select করা হয়েছে
+    $query = "SELECT u.userId AS user_id, u.name, u.email, 
+                     SUM(h.total_marks) as total_score, 
+                     COUNT(h.id) as total_attempt 
+              FROM tbl_exam_history h 
+              INNER JOIN tbl_user u ON h.user_id = u.userId 
+              $whereClause
+              GROUP BY h.user_id 
+              ORDER BY total_score DESC, total_attempt ASC 
+              LIMIT 10";
 
     $result = $this->db->select($query);
     return $result;
