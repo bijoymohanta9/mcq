@@ -2,7 +2,7 @@
 <?php
     Session::checkSession();
 
-    // URL থেকে cat_id ও sub_id পাওয়া
+    // URL থেকে cat_id ও sub_id পাওয়া
     $selected_cat_id = isset($_GET['cat_id']) ? (int)$_GET['cat_id'] : 0;
     $selected_sub_id = isset($_GET['sub_id']) ? (int)$_GET['sub_id'] : 0;
 
@@ -38,18 +38,18 @@
         <form action="" method="POST" class="space-y-6">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Select Category (Read-Only / Pointer-Events None) -->
+                <!-- Select Category -->
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         <i class="fa-solid fa-folder text-indigo-500 mr-1"></i> সিলেক্ট ক্যাটাগরি
                     </label>
                     
                     <?php if ($selected_cat_id > 0): ?>
-                        <!-- Hidden Field to pass category_id during submission -->
+                        <!-- URL থেকে ক্যাটাগরি সিলেক্ট করা থাকলে Hidden Input নিশ্চিত করা -->
                         <input type="hidden" name="category_id" value="<?php echo $selected_cat_id; ?>">
                     <?php endif; ?>
 
-                    <select <?php echo ($selected_cat_id > 0) ? 'name="category_id_disabled" disabled style="background-color: #f1f5f9; cursor: not-allowed;"' : 'name="category_id"'; ?> class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition font-semibold">
+                    <select <?php echo ($selected_cat_id > 0) ? 'disabled style="background-color: #f1f5f9; cursor: not-allowed;"' : 'name="category_id"'; ?> class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition font-semibold">
                         <option value="0" <?php echo ($selected_cat_id == 0) ? 'selected' : ''; ?>>সকল ক্যাটাগরি (Random All)</option>
                         <?php 
                             if (method_exists($exm, 'getCategories')) {
@@ -67,7 +67,7 @@
                     </select>
                 </div>
 
-                <!-- Select Subject (Dynamic Load with Existing Questions) -->
+                <!-- Select Subject -->
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                         <i class="fa-solid fa-book text-indigo-500 mr-1"></i> সিলেক্ট বিষয় (Subject)

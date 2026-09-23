@@ -173,55 +173,53 @@ class User{
 
     //user update method with subscription
     public function userLogin($email, $password) {
-    $email    = $this->fm->validation($email);
-    $password = $this->fm->validation($password);
-    
-    $email    = mysqli_real_escape_string($this->db->link, $email);
-    $password = mysqli_real_escape_string($this->db->link, md5($password));
+      $email    = $this->fm->validation($email);
+      $password = $this->fm->validation($password);
+      
+      $email    = mysqli_real_escape_string($this->db->link, $email);
+      $password = mysqli_real_escape_string($this->db->link, md5($password));
 
-    if (empty($email) || empty($password)) {
-        return "empty";
+      if (empty($email) || empty($password)) {
+          return "empty";
+      }
+
+      $query = "SELECT * FROM tbl_user WHERE email = '$email' AND password = '$password'";
+      $result = $this->db->select($query);
+
+      if ($result != false) {
+          $value = $result->fetch_assoc();
+          
+          if ($value['status'] == '1') { // ইউজার ডিজেবল কিনা চেক
+              return "disable";
+          }
+
+          // সেশন ডাটা সেট করা
+          Session::set("login", true);
+          Session::set("userid", $value['userid']);
+          Session::set("name", $value['name']);
+          Session::set("email", $value['email']);
+
+          // --- সাবস্ক্রিপশন চেক লজিক ---
+          $userId = $value['userid'];
+          $subQuery = "SELECT * FROM tbl_subscription 
+                      WHERE user_id = '$userId' 
+                      AND status = 'active' 
+                      AND expire_date >= NOW() 
+                      LIMIT 1";
+          
+          $subResult = $this->db->select($subQuery);
+
+          if ($subResult != false) {
+              // সাবস্ক্রিপশন অ্যাক্টিভ থাকলে এক্সাম পেজে যাবে
+              return "success_exam";
+          } else {
+              // নতুন ইউজার অথবা সাবস্ক্রিপশন না থাকলে সাবস্ক্রিপশন পেজে যাবে
+              return "success_subscription";
+          }
+
+      } else {
+          return "error";
+      }
     }
-
-    $query = "SELECT * FROM tbl_user WHERE email = '$email' AND password = '$password'";
-    $result = $this->db->select($query);
-
-    if ($result != false) {
-        $value = $result->fetch_assoc();
-        
-        if ($value['status'] == '1') { // ইউজার ডিজেবল কিনা চেক
-            return "disable";
-        }
-
-        // সেশন ডাটা সেট করা
-        Session::set("login", true);
-        Session::set("userid", $value['userid']);
-        Session::set("name", $value['name']);
-        Session::set("email", $value['email']);
-
-        // --- সাবস্ক্রিপশন চেক লজিক ---
-        $userId = $value['userid'];
-        $subQuery = "SELECT * FROM tbl_subscription 
-                     WHERE user_id = '$userId' 
-                     AND status = 'active' 
-                     AND expire_date >= NOW() 
-                     LIMIT 1";
-        
-        $subResult = $this->db->select($subQuery);
-
-        if ($subResult != false) {
-            // সাবস্ক্রিপশন অ্যাক্টিভ থাকলে এক্সাম পেজে যাবে
-            return "success_exam";
-        } else {
-            // নতুন ইউজার অথবা সাবস্ক্রিপশন না থাকলে সাবস্ক্রিপশন পেজে যাবে
-            return "success_subscription";
-        }
-
-    } else {
-        return "error";
-    }
-  }
 }
-
-
- ?>
+?>

@@ -91,21 +91,37 @@ public function importBulkQuestions($fileData) {
 
             if (!empty($ques) && !empty($ans1) && !empty($ans2) && !empty($rightAns)) {
                 
-                // ১. মূল প্রশ্ন ইনসার্ট
-                $query = "INSERT INTO tbl_ques(category_id, subject_id, ques) VALUES('$category_id', '$subject_id', '$ques')";
+                // ১. উক্ত Category & Subject এর জন্য পরবর্তী ক্রমানুসারী quesNo হিসাব করা
+                $nextQuesNo = 1;
+                $numQuery = "SELECT MAX(quesNo) AS max_no FROM tbl_ques 
+                             WHERE category_id = '$category_id' AND subject_id = '$subject_id'";
+                $numRes = $this->db->select($numQuery);
+                
+                if ($numRes) {
+                    $row = $numRes->fetch_assoc();
+                    if ($row['max_no'] !== NULL) {
+                        $nextQuesNo = (int)$row['max_no'] + 1;
+                    }
+                }
+
+                // ২. tbl_ques টেবিলে quesNo সহ ইনসার্ট করা
+                $query = "INSERT INTO tbl_ques(quesNo, category_id, subject_id, ques) 
+                          VALUES('$nextQuesNo', '$category_id', '$subject_id', '$ques')";
                 $insert_row = $this->db->insert($query);
 
                 if ($insert_row) {
-                    // নতুন তৈরি হওয়া প্রশ্নের ID নেওয়া (যেটি tbl_ans এর quesNo হিসেবে বসবে)
-                    $quesNo = $this->db->link->insert_id;
+                    // ৩. নতুন তৈরি হওয়া প্রশ্নের ইউনিক Primary Key (id) সংগ্রাহ করা
+                    $quesId = $this->db->link->insert_id;
+
                     $options = array(1 => $ans1, 2 => $ans2, 3 => $ans3, 4 => $ans4);
 
                     foreach ($options as $key => $option_name) {
                         if ($option_name !== '') {
                             $right_val = ($rightAns == $key) ? '1' : '0';
                             
-                            // ডাটাবেজের কলাম অনুযায়ী: quesNo, rightAns, ans
-                            $ansQuery = "INSERT INTO tbl_ans(quesNo, rightAns, ans) VALUES('$quesNo', '$right_val', '$option_name')";
+                            // ৪. tbl_ans টেবিলে Foreign Key হিসেবে $quesId ব্যবহার করা
+                            $ansQuery = "INSERT INTO tbl_ans(quesNo, rightAns, ans) 
+                                         VALUES('$quesId', '$right_val', '$option_name')";
                             $this->db->insert($ansQuery);
                         }
                     }
@@ -118,7 +134,7 @@ public function importBulkQuestions($fileData) {
         if ($insertedCount > 0) {
             return "<div class='p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold'>সফলভাবে মোট {$insertedCount} টি প্রশ্ন ইম্পোর্ট করা হয়েছে!</div>";
         } else {
-            return "<div class='p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold'>কোনো ডাটা ইম্পোর্ট করা সম্ভব হয়নি। ফাইলের ফরম্যাট যাচাই করুন।</div>";
+            return "<div class='p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold'>কোনো ডাটা ইম্পোর্ট করা সম্ভব হয়নি। ফাইলের ফরম্যাট যাচাই করুন।</div>";
         }
     }
 }
@@ -335,44 +351,51 @@ public function getFilteredLeaderboard($category_id, $subject_id = 0, $attempts_
 }
 
   public function setupCustomExam($category_id, $num_questions, $time_limit, $subject_id = 0) {
-    $category_id   = (int)$category_id;
-    $subject_id    = (int)$subject_id;
-    $num_questions = (int)$num_questions;
-    $time_limit    = (int)$time_limit;
-
-    // ফিল্টারিং ক্যোয়ারী
-    $conditions = ["isDeleted = 0"];
+    $whereClause = "WHERE isDeleted = 0";
 
     if ($category_id > 0) {
-        $conditions[] = "category_id = '$category_id'";
+        $whereClause .= " AND category_id = '$category_id'";
     }
+
     if ($subject_id > 0) {
-        $conditions[] = "subject_id = '$subject_id'";
+        $whereClause .= " AND subject_id = '$subject_id'";
     }
 
-    $whereClause = implode(" AND ", $conditions);
-    $query = "SELECT quesNo FROM tbl_ques WHERE $whereClause ORDER BY RAND() LIMIT $num_questions";
-
+    // Primary Key 'id' সিলেক্ট করে Randomize করা
+    $query = "SELECT id FROM tbl_ques {$whereClause} ORDER BY RAND() LIMIT $num_questions";
     $result = $this->db->select($query);
 
-    $examQuestions = array();
+    $questionsArr = array();
     if ($result) {
         while ($row = $result->fetch_assoc()) {
-            $examQuestions[] = $row['quesNo'];
+            $questionsArr[] = $row['id']; // এখানে Primary Key id ঢুকছে (যেমন: 66, 67, 68)
         }
     }
 
-    // সেশন ডাটা সেট
-    Session::set("exam_questions", $examQuestions);
-    Session::set("exam_total_ques", count($examQuestions));
-    Session::set("exam_time_limit", $time_limit);
+    // সেশন সেটআপ
+    Session::set("exam_questions", $questionsArr);
+    Session::set("exam_total_ques", count($questionsArr));
     Session::set("exam_category_id", $category_id);
     Session::set("exam_subject_id", $subject_id);
+    Session::set("exam_time_limit", $time_limit);
     Session::set("exam_start_time", time());
     
-    Session::set("score", 0);
-    Session::set("correct_ans", 0);
-    Session::set("wrong_ans", 0);
+    // স্কোর ও প্রগ্রেস রিসেট
+    Session::set("exam_score", 0);
+    Session::set("user_answers", array());
+}
+
+public function getQuestionById($quesId) {
+    $quesId = mysqli_real_escape_string($this->db->link, $quesId);
+    
+    // tbl_ques টেবিলের Primary Key 'id' দিয়ে ফিল্টার করা হচ্ছে
+    $query  = "SELECT * FROM tbl_ques WHERE id = '$quesId'";
+    $result = $this->db->select($query);
+
+    if ($result && $result->num_rows > 0) {
+        return $result->fetch_assoc(); // সরাসরি associative array রিটার্ন
+    }
+    return false;
 }
 
 public function getQuestionByNumber($quesNo) {
@@ -386,11 +409,10 @@ public function getQuestionByNumber($quesNo) {
 }
 
 // প্রশ্নের উত্তর (Options) ফেচ করার মেথড
-public function getAnswers($quesNo) {
-    $quesNo = (int)$quesNo;
-    $query = "SELECT * FROM tbl_ans WHERE quesNo = '$quesNo'";
-    $result = $this->db->select($query);
-    return $result;
+public function getAnswers($quesId) {
+    $quesId = mysqli_real_escape_string($this->db->link, $quesId);
+    $query = "SELECT * FROM tbl_ans WHERE quesNo = '$quesId'";
+    return $this->db->select($query);
 }
 
 // ইউজার সাবমিট করা উত্তর প্রসেস ও রেজাল্ট ক্যালকুলেট করার মেথড

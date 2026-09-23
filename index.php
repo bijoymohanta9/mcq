@@ -1,3 +1,16 @@
+<?php
+    ob_start();
+    $filepath = realpath(dirname(__FILE__));
+    include_once ($filepath . '/lib/Session.php');
+    Session::init();
+
+    // ইউজার ইতোমধ্যে লগইন করা থাকলে তাকে exam.php-তে পাঠিয়ে দেওয়া হবে
+    if (Session::get("login") == true) {
+        header("Location: exam.php");
+        exit();
+    }
+?>
+
 <!doctype html>
 <html lang="bn">
 <head>
@@ -202,7 +215,7 @@
       <button type="button" data-open-login class="hidden sm:flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-full transition">
         <svg class="ic w-4 h-4"><use href="#i-user"/></svg> Login
       </button>
-      <a href="register.php" class="join-btn shine inline-flex items-center gap-1.5 rounded-full px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 transition" target="_blank">
+      <a href="register.php" class="join-btn shine inline-flex items-center gap-1.5 rounded-full px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 transition">
         Join Now <svg class="ic w-4 h-4"><use href="#i-arrow"/></svg>
       </a>
       <button type="button" id="burger" class="burger lg:hidden flex flex-col gap-[5px] p-2 ml-1" aria-label="মেনু খুলুন" aria-expanded="false">
@@ -865,12 +878,79 @@ modal.addEventListener('click', e => { if (e.target === modal) closeLogin(); });
 addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
 
 /* DEMO ONLY: remove this block in your real site; your js/main.js handles the login form there. */
-$('#loginForm').addEventListener('submit', e => {
-  e.preventDefault();
-  $$('.empty,.error,.disable', modal).forEach(x => x.style.display = 'none');
-  const filled = $('#email').value.trim() && $('#password').value.trim();
-  $(filled ? '.error' : '.empty', modal).style.display = 'flex';
-});
+
+    /* ==========================================================
+   AJAX Login Implementation
+   ========================================================== */
+addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
+
+/* ==========================================================
+   AJAX Login Implementation
+   ========================================================== */
+/* ==========================================================
+   AJAX Login Implementation (Updated for Modal)
+   ========================================================== */
+const loginForm = $('#loginForm');
+
+if (loginForm) {
+  loginForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    // আগের অ্যালার্ট মেসেজ হাইড করা
+    $$('.empty, .error, .disable', modal).forEach(x => x.style.display = 'none');
+
+    const email = $('#email') ? $('#email').value.trim() : '';
+    const password = $('#password') ? $('#password').value.trim() : '';
+    const redirect = $('#redirect') ? $('#redirect').value : '';
+
+    // ১. ভ্যালিডেশন
+    if (!email || !password) {
+      if ($('.empty', modal)) $('.empty', modal).style.display = 'flex';
+      return;
+    }
+
+    // ২. Request Data প্রস্তুত করা
+    const formData = new URLSearchParams();
+    formData.append('email', email);
+    formData.append('password', password);
+
+    fetch('getlogin.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString()
+    })
+    .then(response => response.text())
+    .then(data => {
+      const res = data.trim();
+      console.log("Login Response:", res);
+
+      if (res === "empty") {
+        if ($('.empty', modal)) $('.empty', modal).style.display = 'flex';
+      } else if (res === "error") {
+        if ($('.error', modal)) $('.error', modal).style.display = 'flex';
+      } else if (res === "disable") {
+        if ($('.disable', modal)) $('.disable', modal).style.display = 'flex';
+      } 
+      // ৩. সফল লগইন ও সাবস্ক্রিপশন লজিক
+      else if (res === "success_exam") {
+        // যদি ইউজার আগে থেকে কোনো নির্দিষ্ট পেজে যেতে চেয়ে থাকে (redirect variable), সেখানে যাবে, নয়তো exam.php-তে যাবে
+        window.location.href = redirect || "exam.php";
+      } else if (res === "success_subscription") {
+        // সাবস্ক্রিপশন না থাকলে subscription.php-তে নিয়ে যাবে
+        window.location.href = "subscription.php";
+      } else {
+        // সেফটি ফলব্যাক (অন্য কোনো URL রিটার্ন করলে)
+        window.location.href = redirect || res || "exam.php";
+      }
+    })
+    .catch(err => {
+      console.error('Login Error:', err);
+      if ($('.error', modal)) $('.error', modal).style.display = 'flex';
+    });
+  });
+}
 
 /* ==========================================================
    GUEST MODE: pages that need an account ask the visitor to log in first.
@@ -894,8 +974,8 @@ document.addEventListener('click', e => {
   let why = a.dataset.protect;
   if (!why) { const m = PROTECT.find(([re]) => re.test(h)); if (m) why = m[1]; }
   if (why) { e.preventDefault(); openLogin(why, h); return; }
-  /* DEMO ONLY: the public .php pages do not exist in this preview 
-  if (/\.php/.test(h)) { e.preventDefault(); toast('ডেমো: এই লিংক আপনার সাইটে ' + h.split('?')[0] + ' পেজে যাবে'); }*/
+  /* DEMO ONLY: the public .php pages do not exist in this preview */
+  //if (/\.php/.test(h)) { e.preventDefault(); toast('ডেমো: এই লিংক আপনার সাইটে ' + h.split('?')[0] + ' পেজে যাবে'); }
 });
 /* open the login popup automatically when the page is opened as index.php?login=1 */
 if (/[?&]login=1/.test(location.search)) openLogin('এই পেজ দেখতে');

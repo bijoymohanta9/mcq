@@ -1,29 +1,29 @@
-<?php 
-include 'inc/header.php';
-Session::checkSession();
+<?php
+    include 'inc/header.php';
+    Session::checkSession();
 
-$userId = Session::get("userid") ? Session::get("userid") : Session::get("userId");
+    // Session Key Mismatch হ্যান্ডেল করা
+    $userId = Session::get("userid") ? Session::get("userid") : Session::get("userId");
+    
+    // Safety handling
+    $userId = mysqli_real_escape_string($db->link, $userId);
 
-if (!isset($db)) {
-    $db = new Database();
-}
+    // ইউজারের সবকটি অ্যাক্টিভ/এপ্রুভড সাবস্ক্রিপশন নিয়ে আসার জন্য
+    $subQuery = "SELECT s.*, c.category_name 
+                 FROM tbl_subscription s 
+                 LEFT JOIN tbl_category c ON s.category_id = c.id 
+                 WHERE s.user_id = '$userId' 
+                 AND LOWER(s.status) = 'approved' 
+                 AND s.expire_date >= NOW() 
+                 ORDER BY s.id DESC";
 
-// ইউজারের সবকটি অ্যাক্টিভ/এপ্রুভড সাবস্ক্রিপশন নিয়ে আসার জন্য (LIMIT 1 সরিয়ে দেওয়া হয়েছে)
-$subQuery = "SELECT s.*, c.category_name 
-             FROM tbl_subscription s 
-             LEFT JOIN tbl_category c ON s.category_id = c.id 
-             WHERE s.user_id = '$userId' 
-             AND LOWER(s.status) = 'approved' 
-             AND s.expire_date >= NOW() 
-             ORDER BY s.id DESC";
+    $subData = $db->select($subQuery);
 
-$subData = $db->select($subQuery);
-
-// কোনো অ্যাক্টিভ সাবস্ক্রিপশন না থাকলে সাবস্ক্রিপশন কিনতে পাঠাবে
-if (!$subData || $subData->num_rows == 0) {
-    header("Location: subscription.php");
-    exit();
-}
+    // কোনো অ্যাক্টিভ সাবস্ক্রিপশন না থাকলে সাবস্ক্রিপশন কিনতে পাঠাবে
+    if (!$subData || $subData->num_rows == 0) {
+        header("Location: subscription.php");
+        exit();
+    }
 ?>
 
 <div class="w-full max-w-5xl mx-auto my-10 px-4">
