@@ -20,6 +20,10 @@
     }
 
     $currentPage = basename($_SERVER['PHP_SELF']);
+
+    // Dropdown Active State Helpers
+    $isQuestionActive = in_array($currentPage, ['quesadd.php', 'queslist.php', 'add_category_subject.php']);
+    $isCircularActive = in_array($currentPage, ['circular_add.php', 'circular_list.php']);
 ?>
 <!doctype html>
 <html lang="bn">
@@ -40,7 +44,7 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
 
     <!-- Navbar Header -->
-    <header class="bg-slate-900 border-b border-slate-800 shadow-lg sticky top-0 z-50">
+    <header class="bg-slate-900 border-b border-slate-800 shadow-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 
@@ -55,39 +59,69 @@
                     </div>
                 </a>
 
-                <!-- Desktop Navigation Links -->
+                <!-- Desktop Clean Navigation Links -->
                 <nav class="hidden lg:flex items-center space-x-1">
+                    
+                    <!-- Home -->
                     <a href="index.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo ($currentPage == 'index.php') ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
                         <i class="fa-solid fa-house"></i> Home
                     </a>
+
+                    <!-- Users -->
                     <a href="users.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo ($currentPage == 'users.php') ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
                         <i class="fa-solid fa-users"></i> Users
                     </a>
-                    <a href="add_category_subject.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo ($currentPage == 'add_category_subject.php') ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
-                        <i class="fa-solid fa-layer-group"></i> Category & Subject
-                    </a>
-                    <a href="quesadd.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo ($currentPage == 'quesadd.php') ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
-                        <i class="fa-solid fa-plus-circle"></i> Add Ques
-                    </a>
-                    <a href="queslist.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo ($currentPage == 'queslist.php') ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
-                        <i class="fa-solid fa-list-check"></i> Ques List
-                    </a>
 
-                    <!-- Circular Management Links -->
-                    <a href="circular_add.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 border border-indigo-500/20 <?php echo ($currentPage == 'circular_add.php') ? 'text-white bg-indigo-900/60' : 'text-indigo-300 hover:text-white hover:bg-indigo-950/50'; ?>">
-                        <i class="fa-solid fa-file-circle-plus"></i> Add Circular
-                    </a>
-                    <a href="circular_list.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 border border-indigo-500/20 <?php echo ($currentPage == 'circular_list.php') ? 'text-white bg-indigo-900/60' : 'text-indigo-300 hover:text-white hover:bg-indigo-950/50'; ?>">
-                        <i class="fa-solid fa-briefcase"></i> Circular List
-                    </a>
+                    <!-- Dropdown 1: Question Bank -->
+                    <div class="relative group">
+                        <button class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo $isQuestionActive ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
+                            <i class="fa-solid fa-folder-tree"></i> 
+                            <span>Question Bank</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] opacity-70 group-hover:rotate-180 transition-transform"></i>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-52 bg-slate-800 border border-slate-700/80 rounded-xl shadow-xl py-2 hidden group-hover:block transition z-50">
+                            <a href="quesadd.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'quesadd.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-circle-plus text-indigo-400"></i> Add Question
+                            </a>
+                            <a href="queslist.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'queslist.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-emerald-400"></i> Question List
+                            </a>
+                            <div class="border-t border-slate-700/60 my-1"></div>
+                            <a href="add_category_subject.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'add_category_subject.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group text-amber-400"></i> Category & Subject
+                            </a>
+                        </div>
+                    </div>
 
+                    <!-- Dropdown 2: Circulars -->
+                    <div class="relative group">
+                        <button class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo $isCircularActive ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
+                            <i class="fa-solid fa-bullhorn"></i> 
+                            <span>Circulars</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] opacity-70 group-hover:rotate-180 transition-transform"></i>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-48 bg-slate-800 border border-slate-700/80 rounded-xl shadow-xl py-2 hidden group-hover:block transition z-50">
+                            <a href="circular_add.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'circular_add.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-file-circle-plus text-indigo-400"></i> Add Circular
+                            </a>
+                            <a href="circular_list.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'circular_list.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-briefcase text-sky-400"></i> Circular List
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Subscriptions -->
                     <a href="subscriptions.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo ($currentPage == 'subscriptions.php') ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
                         <i class="fa-solid fa-gem text-amber-400"></i> Subscriptions
                     </a>
+
+                    <!-- Leaderboard -->
                     <a href="leaderboard.php" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 <?php echo ($currentPage == 'leaderboard.php') ? 'text-white bg-slate-800' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'; ?>">
                         <i class="fa-solid fa-trophy text-amber-400"></i> Leaderboard
                     </a>
-                    <a href="?action=logout" class="ml-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-600/80 transition flex items-center gap-1.5 border border-rose-500/20">
+
+                    <!-- Logout -->
+                    <a href="?action=logout" class="ml-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-600 transition flex items-center gap-1.5 border border-rose-500/20 hover:border-transparent">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
                     </a>
                 </nav>
@@ -101,35 +135,41 @@
         </div>
 
         <!-- Mobile Drawer Menu -->
-        <div id="adminMobileMenu" class="hidden lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-4 space-y-1.5">
+        <div id="adminMobileMenu" class="hidden lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-4 space-y-1">
             <a href="index.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
                 <i class="fa-solid fa-house w-5"></i> Home
             </a>
             <a href="users.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
                 <i class="fa-solid fa-users w-5"></i> Users
             </a>
-            <a href="add_category_subject.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
+            
+            <div class="pt-2 pb-1 text-[11px] font-bold text-slate-500 tracking-wider uppercase px-3">Question Bank</div>
+            <a href="quesadd.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg pl-6">
+                <i class="fa-solid fa-plus-circle w-5"></i> Add Question
+            </a>
+            <a href="queslist.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg pl-6">
+                <i class="fa-solid fa-list-check w-5"></i> Question List
+            </a>
+            <a href="add_category_subject.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg pl-6">
                 <i class="fa-solid fa-layer-group w-5"></i> Category & Subject
             </a>
-            <a href="quesadd.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
-                <i class="fa-solid fa-plus-circle w-5"></i> Add Ques
-            </a>
-            <a href="queslist.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
-                <i class="fa-solid fa-list-check w-5"></i> Ques List
-            </a>
-            <a href="circular_add.php" class="block px-3 py-2 text-xs font-semibold text-indigo-300 hover:bg-slate-800 rounded-lg">
+
+            <div class="pt-2 pb-1 text-[11px] font-bold text-slate-500 tracking-wider uppercase px-3">Circulars</div>
+            <a href="circular_add.php" class="block px-3 py-2 text-xs font-semibold text-indigo-300 hover:bg-slate-800 rounded-lg pl-6">
                 <i class="fa-solid fa-file-circle-plus w-5"></i> Add Circular
             </a>
-            <a href="circular_list.php" class="block px-3 py-2 text-xs font-semibold text-indigo-300 hover:bg-slate-800 rounded-lg">
+            <a href="circular_list.php" class="block px-3 py-2 text-xs font-semibold text-indigo-300 hover:bg-slate-800 rounded-lg pl-6">
                 <i class="fa-solid fa-briefcase w-5"></i> Circular List
             </a>
+
+            <div class="pt-2"></div>
             <a href="subscriptions.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
                 <i class="fa-solid fa-gem text-amber-400 w-5"></i> Subscriptions
             </a>
             <a href="leaderboard.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
                 <i class="fa-solid fa-trophy text-amber-400 w-5"></i> Leaderboard
             </a>
-            <a href="?action=logout" class="block px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-900/40 rounded-lg">
+            <a href="?action=logout" class="block px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-900/40 rounded-lg mt-2">
                 <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
             </a>
         </div>
