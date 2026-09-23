@@ -9,7 +9,7 @@
     
     <!-- Page Header & Instructions -->
     <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-slate-900 tracking-tight">পরীক্ষা ও সাবস্ক্রিপশন প্ল্যান নির্বাচন করুন</h2>
+        <h2 class="text-3xl font-bold text-slate-900 tracking-tight">নিচের ২ টি ধাপে পরীক্ষা ও সাবস্ক্রিপশন প্ল্যান নির্বাচন করুন</h2>
         <p class="text-slate-600 text-sm mt-2 max-w-xl mx-auto">
             আপনার কাঙ্ক্ষিত পরীক্ষার কোর্সটি বেছে নিন এবং মেয়াদ সিলেক্ট করে সাবস্ক্রিপশন সম্পন্ন করুন। পেমেন্ট সম্পন্ন হওয়ার সাথে সাথেই সকল মডেল টেস্ট একটিভ হয়ে যাবে।
         </p>

@@ -16,7 +16,7 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+/*!40101 SET NAMES utf8mb4_unicode_ci */;
 
 --
 -- Database: `db_exam`
@@ -32,7 +32,7 @@ CREATE TABLE `tbl_admin` (
   `adminId` int(11) NOT NULL,
   `adminUser` varchar(50) NOT NULL,
   `adminPass` varchar(32) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tbl_admin`
@@ -52,7 +52,7 @@ CREATE TABLE `tbl_ans` (
   `quesNo` int(11) NOT NULL,
   `rightAns` int(11) NOT NULL DEFAULT '0',
   `ans` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tbl_ans`
@@ -94,7 +94,7 @@ CREATE TABLE `tbl_ques` (
   `id` int(11) NOT NULL,
   `quesNo` int(11) NOT NULL,
   `ques` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tbl_ques`
@@ -121,7 +121,7 @@ CREATE TABLE `tbl_user` (
   `password` varchar(32) NOT NULL,
   `email` varchar(255) NOT NULL,
   `status` int(11) NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `tbl_user`

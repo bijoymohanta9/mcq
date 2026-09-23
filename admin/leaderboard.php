@@ -153,7 +153,7 @@
                             </td>
                             <td class="py-4 px-6">
                                 <div class="font-bold text-slate-800"><?php echo htmlspecialchars($row['name']); ?></div>
-                                <div class="text-[10px] text-slate-400">ID: #<?php echo isset($row['userId']) ? $row['userId'] : $rank; ?></div>
+                                <div class="text-[10px] text-slate-400">ID: #<?php echo isset($row['user_id']) ? $row['user_id'] : $rank; ?></div>
                             </td>
                             <td class="py-4 px-6 text-slate-500 font-medium"><?php echo htmlspecialchars($row['email']); ?></td>
                             <td class="py-4 px-6 text-center font-semibold text-slate-600">
@@ -165,7 +165,7 @@
                                 <?php echo $row['total_score']; ?> pts
                             </td>
                             <td class="py-4 px-6 text-right">
-                                <a href="user_details.php?id=<?php echo isset($row['userId']) ? $row['userId'] : ''; ?>" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded-xl font-bold transition text-[11px]">
+                                <a href="user_details.php?id=<?php echo isset($row['user_id']) ? $row['user_id'] : ''; ?>" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded-xl font-bold transition text-[11px]">
                                     <i class="fa-solid fa-eye"></i> View Profile
                                 </a>
                             </td>

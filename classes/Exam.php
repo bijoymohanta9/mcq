@@ -535,12 +535,12 @@ public function updateSubscriptionStatus($sub_id, $status, $duration) {
         $start_date = date('Y-m-d H:i:s');
         
         // Duration Check
-        if (strpos($duration, '365') !== false || strpos($duration, '1') !== false) {
+        if (strpos($duration, '365') !== false || strpos($duration, '12') !== false) {
             $expire_date = date('Y-m-d H:i:s', strtotime('+365 days'));
         } elseif (strpos($duration, '90') !== false || strpos($duration, '3') !== false) {
             $expire_date = date('Y-m-d H:i:s', strtotime('+90 days'));
         } else {
-            $expire_date = date('Y-m-d H:i:s', strtotime('+30 days'));
+            $expire_date = date('Y-m-d H:i:s', strtotime('+180 days'));
         }
 
         $query = "UPDATE tbl_subscription 

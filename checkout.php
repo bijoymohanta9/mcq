@@ -81,7 +81,7 @@
                 <input type="hidden" name="category_id" value="<?php echo $categoryId; ?>">
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-2 gap-14">
                 <!-- Duration -->
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">মেয়াদ</label>
@@ -91,14 +91,14 @@
                 <!-- Amount -->
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">পরিমাণ (BDT)</label>
-                    <input type="number" name="amount" value="<?php echo $amount; ?>" class="w-full p-2.5 border rounded-lg bg-slate-50 font-bold" readonly>
+                    <input type="number" name="amount" value="<?php echo $amount; ?>"style="padding:5px;" class="w-full p-2.5 border rounded-lg bg-slate-50 font-bold" readonly>
                 </div>
             </div>
 
             <!-- Payment Method -->
             <div>
                 <label class="block font-bold text-slate-700 mb-1">পেমেন্ট মেথড</label>
-                <select name="payment_method" class="w-full p-2.5 border rounded-lg focus:ring-1 focus:ring-indigo-500" required>
+                <select name="payment_method" class="w-full p-1.5 border rounded-lg focus:ring-1 focus:ring-indigo-500" required>
                     <option value="bKash">bKash</option>
                     <option value="Nagad">Nagad</option>
                     <option value="Rocket">Rocket</option>

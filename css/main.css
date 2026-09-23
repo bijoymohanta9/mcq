@@ -23,7 +23,7 @@ input[type="text"], input[type="password"] {
   border: 1px solid #ddd;
   margin-bottom: 10px;
   padding: 5px;
-  width: 238px;
+  width: 217px;
 }
 input[type="submit"] {
   cursor: pointer;
