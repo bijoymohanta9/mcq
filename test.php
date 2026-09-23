@@ -3,7 +3,7 @@
     Session::checkSession();
 
     // ১. সেশন থেকে ডাটা রিড করা
-    $examQuestions = Session::get("exam_questions");
+    $examQuestions = Session::get("exam_questions"); // এতে প্রশ্নের primary key 'id' (যেমন: 66, 67, 68) থাকা উচিত
     $totalQues     = Session::get("exam_total_ques");
     $catId         = Session::get("exam_category_id");
     $subId         = Session::get("exam_subject_id");
@@ -20,13 +20,13 @@
         $currentNumber = (int)$_POST['number'];
         $selectedAns   = isset($_POST['ans']) ? (int)$_POST['ans'] : 0;
 
-        // বর্তমান প্রশ্নের আসল quesNo আইডি বের করা
+        // বর্তমান প্রশ্নের আসল Primary Key ID বের করা
         if (isset($examQuestions[$currentNumber - 1])) {
-            $quesNo = $examQuestions[$currentNumber - 1];
+            $quesId = $examQuestions[$currentNumber - 1]; // যেমন: 68
             
             // উত্তর প্রসেস করা (Score / Correct Answer আপডেট)
             if (method_exists($exm, 'processAnswer')) {
-                $exm->processAnswer($quesNo, $selectedAns);
+                $exm->processAnswer($quesId, $selectedAns);
             }
         }
 
@@ -41,7 +41,7 @@
         }
     }
 
-    // ৩. বর্তমান প্রশ্নের সিকোয়েন্স নম্বর (q = 1, 2, 3...)
+    // ৩. বর্তমান প্রশ্নের সিকোয়েন্স নম্বর (q = 1, 2, 3...)
     $number = isset($_GET['q']) ? (int)$_GET['q'] : 1;
 
     if (!$examQuestions || $number > $totalQues || !isset($examQuestions[$number - 1])) {
@@ -49,8 +49,15 @@
         exit();
     }
 
-    $quesNo   = $examQuestions[$number - 1];
-    $question = $exm->getQuestionByNumber($quesNo);
+    // $quesId হলো tbl_ques টেবিলের মূল Primary Key 'id' (যেমন: 68)
+    $quesId   = $examQuestions[$number - 1];
+    
+    // Primary Key 'id' দিয়ে প্রশ্ন ফেচ করা
+    if (method_exists($exm, 'getQuestionById')) {
+        $question = $exm->getQuestionById($quesId);
+    } else {
+        $question = $exm->getQuestionByNumber($quesId);
+    }
 
     // ক্যাটাগরি ও সাবজেক্টের নাম ফেচ করা
     $categoryName = "সকল ক্যাটাগরি";
@@ -110,7 +117,8 @@
         <form id="examForm" action="" method="POST" class="space-y-3">
             <?php
                 if (method_exists($exm, 'getAnswers')) {
-                    $ans = $exm->getAnswers($quesNo);
+                    // $quesId (Primary Key: 68) পাস করা হচ্ছে, ফলে অপশনগুলো ডাটাবেজ থেকে চলে আসবে
+                    $ans = $exm->getAnswers($quesId);
                     if ($ans):
                         while ($row = $ans->fetch_assoc()):
             ?>
@@ -150,7 +158,6 @@
         document.getElementById('timer').innerText = minutes + ':' + seconds;
 
         if (remainingTime <= 0) {
-            // সময় শেষ হলে required উঠিয়ে স্বয়ংক্রিয় সাবমিট করা
             const requiredInputs = document.querySelectorAll('#examForm [required]');
             requiredInputs.forEach(input => input.removeAttribute('required'));
 
