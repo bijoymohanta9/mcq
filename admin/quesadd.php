@@ -160,7 +160,7 @@
                                 $getCats = $db->select($query);
                                 if ($getCats) {
                                     while ($cat = $getCats->fetch_assoc()) {
-                                        echo "<option value='{$cat['id']}'>{$cat['category_name']}</option>";
+                                        echo "<option value='{$cat['id']}'>{$cat['id']} - {$cat['category_name']}</option>";
                                     }
                                 }
                             ?>
@@ -182,7 +182,7 @@
                                 $getSubs = $db->select($query);
                                 if ($getSubs) {
                                     while ($sub = $getSubs->fetch_assoc()) {
-                                        echo "<option value='{$sub['id']}'>{$sub['subject_name']}</option>";
+                                        echo "<option value='{$sub['id']}'>{$sub['id']} - {$sub['subject_name']}</option>";
                                     }
                                 }
                             ?>
