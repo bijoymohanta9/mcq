@@ -122,7 +122,7 @@ $end_number = min($offset + $per_page, $total_questions);
                         <th class="py-4 px-6">Category</th>
                         <th class="py-4 px-6">Subject</th>
                         <th class="py-4 px-6">Question</th>
-                        <th class="py-4 px-6 w-32 text-center">Action</th>
+                        <th class="py-4 px-6 w-44 text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -134,11 +134,17 @@ $end_number = min($offset + $per_page, $total_questions);
                                 <td class="py-4 px-6 font-medium text-slate-600"><?php echo htmlspecialchars($result['subject_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8'); ?></td>
                                 <td class="py-4 px-6 font-medium text-slate-800"><?php echo htmlspecialchars($result['ques'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                 <td class="py-4 px-6 text-center">
-                                    <a onclick="return confirm('Are You Sure to Remove')"
-                                       href="?<?php echo htmlspecialchars(http_build_query(array_merge($queryParams, array('page' => $page, 'delque' => $result['quesNo']))), ENT_QUOTES, 'UTF-8'); ?>"
-                                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white text-xs font-semibold transition">
-                                        <i class="fa-regular fa-trash-can"></i><span>Remove</span>
-                                    </a>
+                                    <div class="inline-flex items-center justify-center gap-1.5">
+                                        <a href="quesedit.php?id=<?php echo (int)$result['id']; ?>"
+                                           class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-semibold transition">
+                                            <i class="fa-regular fa-pen-to-square"></i><span>Edit</span>
+                                        </a>
+                                        <a onclick="return confirm('Are You Sure to Remove')"
+                                           href="?<?php echo htmlspecialchars(http_build_query(array_merge($queryParams, array('page' => $page, 'delque' => $result['quesNo']))), ENT_QUOTES, 'UTF-8'); ?>"
+                                           class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white text-xs font-semibold transition">
+                                            <i class="fa-regular fa-trash-can"></i><span>Remove</span>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
