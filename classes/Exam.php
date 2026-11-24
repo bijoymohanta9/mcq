@@ -599,6 +599,110 @@ public function getAllCirculars() {
     return $this->db->select($query);
 }
 
+
+// Admin Circular List: category/status/search filter এবং pagination
+public function getCircularListCount($category_id = 0, $status = 'all', $search = '') {
+    $category_id = (int)$category_id;
+    $status = in_array($status, array('all', 'active', 'expired'), true) ? $status : 'all';
+    $search = $this->db->link->real_escape_string(trim($search));
+
+    $where = "WHERE 1=1";
+    if ($category_id > 0) {
+        $where .= " AND c.category_id = '$category_id'";
+    }
+    if ($status === 'active') {
+        $where .= " AND c.deadline >= CURDATE()";
+    } elseif ($status === 'expired') {
+        $where .= " AND c.deadline < CURDATE()";
+    }
+    if ($search !== '') {
+        $where .= " AND (c.title LIKE '%$search%' OR c.organization LIKE '%$search%')";
+    }
+
+    $query = "SELECT COUNT(*) AS total FROM tbl_circular c $where";
+    $result = $this->db->select($query);
+    if ($result) {
+        $row = $result->fetch_assoc();
+        return (int)($row['total'] ?? 0);
+    }
+    return 0;
+}
+
+public function getCircularListPaginated($category_id = 0, $status = 'all', $search = '', $limit = 10, $offset = 0) {
+    $category_id = (int)$category_id;
+    $status = in_array($status, array('all', 'active', 'expired'), true) ? $status : 'all';
+    $search = $this->db->link->real_escape_string(trim($search));
+    $limit = max(1, (int)$limit);
+    $offset = max(0, (int)$offset);
+
+    $where = "WHERE 1=1";
+    if ($category_id > 0) {
+        $where .= " AND c.category_id = '$category_id'";
+    }
+    if ($status === 'active') {
+        $where .= " AND c.deadline >= CURDATE()";
+    } elseif ($status === 'expired') {
+        $where .= " AND c.deadline < CURDATE()";
+    }
+    if ($search !== '') {
+        $where .= " AND (c.title LIKE '%$search%' OR c.organization LIKE '%$search%')";
+    }
+
+    $query = "SELECT c.*, cat.category_name
+              FROM tbl_circular c
+              LEFT JOIN tbl_category cat ON c.category_id = cat.id
+              $where
+              ORDER BY c.id DESC
+              LIMIT $limit OFFSET $offset";
+    return $this->db->select($query);
+}
+
+
+// নির্দিষ্ট সার্কুলারের তথ্য Edit ফর্মে দেখানোর জন্য
+public function getCircularById($id) {
+    $id = (int)$id;
+    if ($id <= 0) return false;
+
+    $query = "SELECT * FROM tbl_circular WHERE id = '$id' LIMIT 1";
+    return $this->db->select($query);
+}
+
+// সার্কুলারের তথ্য আপডেট করার জন্য
+public function updateCircular($id, $data) {
+    $id = (int)$id;
+    if ($id <= 0) {
+        return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>সঠিক সার্কুলার নির্বাচন করা হয়নি।</div>";
+    }
+
+    $category_id  = (int)($data['category_id'] ?? 0);
+    $title        = $this->db->link->real_escape_string(trim($data['title'] ?? ''));
+    $organization = $this->db->link->real_escape_string(trim($data['organization'] ?? ''));
+    $vacancy      = $this->db->link->real_escape_string(trim($data['vacancy'] ?? ''));
+    $deadline     = $this->db->link->real_escape_string(trim($data['deadline'] ?? ''));
+    $apply_url    = $this->db->link->real_escape_string(trim($data['apply_url'] ?? ''));
+    $pdf_url      = $this->db->link->real_escape_string(trim($data['pdf_url'] ?? ''));
+
+    if ($category_id <= 0 || $title === '' || $organization === '' || $deadline === '' || $apply_url === '') {
+        return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>আবশ্যকীয় ফিল্ডগুলো পূরণ করুন।</div>";
+    }
+
+    $query = "UPDATE tbl_circular SET
+                category_id = '$category_id',
+                title = '$title',
+                organization = '$organization',
+                vacancy = '$vacancy',
+                deadline = '$deadline',
+                apply_url = '$apply_url',
+                pdf_url = '$pdf_url'
+              WHERE id = '$id'";
+
+    $updated = $this->db->update($query);
+    if ($updated) {
+        return "<div class='p-4 mb-4 text-xs text-emerald-700 bg-emerald-100 rounded-xl font-bold'>সার্কুলার সফলভাবে আপডেট হয়েছে!</div>";
+    }
+    return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>সার্কুলার আপডেট করা যায়নি। ডাটাবেজ সংযোগ ও তথ্য যাচাই করুন।</div>";
+}
+
 // সার্কুলার মুছে ফেলার মেথড
 public function deleteCircular($id) {
     $id = $this->db->link->real_escape_string($id);
@@ -610,6 +714,142 @@ public function deleteCircular($id) {
         return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>মুছে ফেলা সম্ভব হয়নি।</div>";
     }
 }
+
+
+// Admin Question List: category/subject/search filter এবং pagination
+public function getQuestionListCount($category_id = 0, $subject_id = 0, $search = '') {
+    $category_id = (int)$category_id;
+    $subject_id  = (int)$subject_id;
+    $search      = $this->db->link->real_escape_string(trim($search));
+
+    $where = "WHERE q.isDeleted = 0";
+    if ($category_id > 0) $where .= " AND q.category_id = '$category_id'";
+    if ($subject_id > 0)  $where .= " AND q.subject_id = '$subject_id'";
+    if ($search !== '')   $where .= " AND q.ques LIKE '%$search%'";
+
+    $query = "SELECT COUNT(*) AS total FROM tbl_ques q $where";
+    $result = $this->db->select($query);
+
+    if ($result) {
+        $row = $result->fetch_assoc();
+        return (int)($row['total'] ?? 0);
+    }
+    return 0;
+}
+
+public function getQuestionListPaginated($category_id = 0, $subject_id = 0, $search = '', $limit = 10, $offset = 0) {
+    $category_id = (int)$category_id;
+    $subject_id  = (int)$subject_id;
+    $search      = $this->db->link->real_escape_string(trim($search));
+    $limit       = max(1, (int)$limit);
+    $offset      = max(0, (int)$offset);
+
+    $where = "WHERE q.isDeleted = 0";
+    if ($category_id > 0) $where .= " AND q.category_id = '$category_id'";
+    if ($subject_id > 0)  $where .= " AND q.subject_id = '$subject_id'";
+    if ($search !== '')   $where .= " AND q.ques LIKE '%$search%'";
+
+    $query = "SELECT q.*, c.category_name, s.subject_name
+              FROM tbl_ques q
+              LEFT JOIN tbl_category c ON q.category_id = c.id
+              LEFT JOIN tbl_subject s ON q.subject_id = s.id
+              $where
+              ORDER BY q.id DESC
+              LIMIT $limit OFFSET $offset";
+    return $this->db->select($query);
+}
+
+
+// ================= Category & Subject Management =================
+
+public function updateCategory($id, $name) {
+    $id = (int)$id;
+    $name = trim($this->db->link->real_escape_string($name));
+    if ($id <= 0 || $name === '') return array(false, "সঠিক ক্যাটাগরির নাম দিন।");
+
+    $query = "UPDATE tbl_category SET category_name = '$name' WHERE id = '$id'";
+    if ($this->db->update($query)) {
+        return array(true, "ক্যাটাগরি সফলভাবে আপডেট হয়েছে।");
+    }
+    return array(false, "ক্যাটাগরি আপডেট করা যায়নি।");
+}
+
+public function updateSubject($id, $name) {
+    $id = (int)$id;
+    $name = trim($this->db->link->real_escape_string($name));
+    if ($id <= 0 || $name === '') return array(false, "সঠিক বিষয়ের নাম দিন।");
+
+    $query = "UPDATE tbl_subject SET subject_name = '$name' WHERE id = '$id'";
+    if ($this->db->update($query)) {
+        return array(true, "বিষয় সফলভাবে আপডেট হয়েছে।");
+    }
+    return array(false, "বিষয় আপডেট করা যায়নি।");
+}
+
+private function getReferenceCount($table, $column, $id) {
+    // Table/column arguments are fixed internally by the methods below.
+    $id = (int)$id;
+    $query = "SELECT COUNT(*) AS total FROM $table WHERE $column = '$id'";
+    $result = $this->db->select($query);
+    if (!$result) return false;
+    $row = $result->fetch_assoc();
+    return (int)($row['total'] ?? 0);
+}
+
+public function deleteCategorySafely($id) {
+    $id = (int)$id;
+    if ($id <= 0) return array(false, "সঠিক ক্যাটাগরি নির্বাচন করুন।");
+
+    // Categories are referenced by questions, circulars, exam history and subscriptions.
+    $references = array(
+        array('tbl_ques', 'category_id'),
+        array('tbl_circular', 'category_id'),
+        array('tbl_exam_history', 'category_id'),
+        array('tbl_subscription', 'category_id')
+    );
+
+    foreach ($references as $reference) {
+        $count = $this->getReferenceCount($reference[0], $reference[1], $id);
+        if ($count === false) {
+            return array(false, "ব্যবহারের তথ্য যাচাই করা যায়নি। নিরাপত্তার জন্য ক্যাটাগরিটি মুছে ফেলা হয়নি।");
+        }
+        if ($count > 0) {
+            return array(false, "এই ক্যাটাগরি {$count}টি রেকর্ডে ব্যবহৃত হচ্ছে। আগে সংশ্লিষ্ট রেকর্ডের Category পরিবর্তন করুন; তারপর Delete করতে পারবেন।");
+        }
+    }
+
+    if ($this->db->delete("DELETE FROM tbl_category WHERE id = '$id'")) {
+        return array(true, "ক্যাটাগরি সফলভাবে মুছে ফেলা হয়েছে।");
+    }
+    return array(false, "ক্যাটাগরি মুছে ফেলা যায়নি।");
+}
+
+public function deleteSubjectSafely($id) {
+    $id = (int)$id;
+    if ($id <= 0) return array(false, "সঠিক বিষয় নির্বাচন করুন।");
+
+    // Subjects are referenced by questions and exam history.
+    $references = array(
+        array('tbl_ques', 'subject_id'),
+        array('tbl_exam_history', 'subject_id')
+    );
+
+    foreach ($references as $reference) {
+        $count = $this->getReferenceCount($reference[0], $reference[1], $id);
+        if ($count === false) {
+            return array(false, "ব্যবহারের তথ্য যাচাই করা যায়নি। নিরাপত্তার জন্য বিষয়টি মুছে ফেলা হয়নি।");
+        }
+        if ($count > 0) {
+            return array(false, "এই বিষয় {$count}টি রেকর্ডে ব্যবহৃত হচ্ছে। আগে সংশ্লিষ্ট রেকর্ডের Subject পরিবর্তন করুন; তারপর Delete করতে পারবেন।");
+        }
+    }
+
+    if ($this->db->delete("DELETE FROM tbl_subject WHERE id = '$id'")) {
+        return array(true, "বিষয় সফলভাবে মুছে ফেলা হয়েছে।");
+    }
+    return array(false, "বিষয় মুছে ফেলা যায়নি।");
+}
+
 
 }
 
