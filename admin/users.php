@@ -10,13 +10,21 @@
 
 <?php 
     if (isset($_GET['dis'])) {
-        $dblid = (int)$_GET['dis'];
-        $dblUser = $usr->disableUser($dblid);
+        if ($isCoAdmin) {
+            $dblUser = "Co-Admin এর ইউজার ডিসেবল করার অনুমতি নেই।";
+        } else {
+            $dblid = (int)$_GET['dis'];
+            $dblUser = $usr->disableUser($dblid);
+        }
     }
 
     if (isset($_GET['ena'])) {
-        $ebllid = (int)$_GET['ena'];
-        $eblUser = $usr->enableUser($ebllid);
+        if ($isCoAdmin) {
+            $eblUser = "Co-Admin এর ইউজার এনেবল করার অনুমতি নেই।";
+        } else {
+            $ebllid = (int)$_GET['ena'];
+            $eblUser = $usr->enableUser($ebllid);
+        }
     }
 
     if (isset($_GET['del'])) {
@@ -64,7 +72,9 @@
                         <th class="py-4 px-6">ইউজারনেম</th>
                         <th class="py-4 px-6">ইমেইল</th>
                         <th class="py-4 px-6 text-center">স্ট্যাটাস</th>
-                        <th class="py-4 px-6 text-right">অ্যাকশন</th>
+                        <?php if (!$isCoAdmin): ?>
+                            <th class="py-4 px-6 text-right">অ্যাকশন</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
@@ -111,38 +121,38 @@
                                 <?php endif; ?>
                             </td>
 
-                            <td class="py-4 px-6 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <?php if ($result['status'] == '0'): ?>
-                                        <a onclick="return confirm('আপনি কি নিশ্চিত যে এই ইউজারকে ডিসেবল করবেন?')" 
-                                           href="?dis=<?php echo $result['userid'];?>" 
-                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-semibold transition border border-amber-200" title="Disable User">
-                                            <i class="fa-solid fa-user-slash text-[11px]"></i>
-                                            <span>ডিসেবল</span>
-                                        </a>
-                                    <?php else: ?>
-                                        <a onclick="return confirm('আপনি কি নিশ্চিত যে এই ইউজারকে এনেবল করবেন?')" 
-                                           href="?ena=<?php echo $result['userid'];?>" 
-                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-semibold transition border border-emerald-200" title="Enable User">
-                                            <i class="fa-solid fa-user-check text-[11px]"></i>
-                                            <span>এনেবল</span>
-                                        </a>
-                                    <?php endif; ?>
+                            <?php if (!$isCoAdmin): ?>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <?php if ($result['status'] == '0'): ?>
+                                            <a onclick="return confirm('আপনি কি নিশ্চিত যে এই ইউজারকে ডিসেবল করবেন?')" 
+                                               href="?dis=<?php echo $result['userid'];?>" 
+                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-semibold transition border border-amber-200" title="Disable User">
+                                                <i class="fa-solid fa-user-slash text-[11px]"></i>
+                                                <span>ডিসেবল</span>
+                                            </a>
+                                        <?php else: ?>
+                                            <a onclick="return confirm('আপনি কি নিশ্চিত যে এই ইউজারকে এনেবল করবেন?')" 
+                                               href="?ena=<?php echo $result['userid'];?>" 
+                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-semibold transition border border-emerald-200" title="Enable User">
+                                                <i class="fa-solid fa-user-check text-[11px]"></i>
+                                                <span>এনেবল</span>
+                                            </a>
+                                        <?php endif; ?>
 
-                                    <?php if (!$isCoAdmin): ?>
                                         <a onclick="return confirm('আপনি কি নিশ্চিত যে এই ইউজারকে স্থায়ীভাবে মুছে ফেলবেন?')" 
                                            href="?del=<?php echo $result['userid'];?>" 
                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg font-semibold transition border border-rose-200" title="Remove User">
                                             <i class="fa-solid fa-trash-can text-[11px]"></i>
                                             <span>মুছুন</span>
                                         </a>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
+                                    </div>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php }} else { ?>
                         <tr>
-                            <td colspan="6" class="py-8 text-center text-slate-400">
+                            <td colspan="<?php echo $isCoAdmin ? '5' : '6'; ?>" class="py-8 text-center text-slate-400">
                                 কোনো ব্যবহারকারী পাওয়া যায়নি।
                             </td>
                         </tr>
