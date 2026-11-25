@@ -1,6 +1,6 @@
 <?php
 define("DB_HOST", "localhost");
-define("DB_USER", "vfct_dev_mcq_rnd_bgd");
-define("DB_PASS", "GB4D3ozN0F!dqN9u");
-define("DB_NAME", "vfct_dev_mcq");
+define("DB_USER", "root");
+define("DB_PASS", "");
+define("DB_NAME", "db_exam");
 /* hare krishna */
