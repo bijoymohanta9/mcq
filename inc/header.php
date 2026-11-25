@@ -26,6 +26,31 @@
     // Active page helper
     $currentPage = basename($_SERVER['PHP_SELF']);
 
+    // Header navbar user picture lookup (if available)
+    $navPicPath = '';
+    $navInitial = strtoupper(substr(Session::get('name') ?? 'R', 0, 1));
+    if (Session::get("login") == true) {
+        $navSessionUserId = (int)(Session::get("userId") ?? Session::get("user_id") ?? Session::get("id") ?? $_SESSION['userId'] ?? $_SESSION['user_id'] ?? 0);
+        $navUserRow = false;
+        if ($navSessionUserId > 0) {
+            $navUserRow = $exm->getUserProfileById($navSessionUserId);
+        } elseif (!empty(Session::get('email'))) {
+            $safeNavEmail = mysqli_real_escape_string($db->link, Session::get('email'));
+            $navRes = $db->select("SELECT * FROM tbl_user WHERE email = '$safeNavEmail' LIMIT 1");
+            if ($navRes && $navRes->num_rows > 0) {
+                $navUserRow = $navRes->fetch_assoc();
+            }
+        }
+        if ($navUserRow) {
+            if (!empty($navUserRow['name'])) {
+                $navInitial = strtoupper(substr($navUserRow['name'], 0, 1));
+            }
+            if (!empty($navUserRow['picture'])) {
+                $navPicPath = 'uploads/users/' . htmlspecialchars(basename($navUserRow['picture']), ENT_QUOTES, 'UTF-8');
+            }
+        }
+    }
+
     header("Cache-Control: no-store, no-cache, must-revalidate"); 
     header("Cache-Control: pre-check=0, post-check=0, max-age=0"); 
     header("Pragma: no-cache"); 
@@ -104,9 +129,13 @@
                         <!-- User Profile Dropdown Menu -->
                         <div class="relative" id="userMenuWrapper">
                             <button id="userMenuBtn" class="flex items-center space-x-2 p-1.5 rounded-xl hover:bg-slate-100 border border-transparent hover:border-slate-200 transition focus:outline-none">
-                                <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center border border-indigo-200">
-                                    <?php echo strtoupper(substr(Session::get('name'), 0, 1)); ?>
-                                </div>
+                                <?php if (!empty($navPicPath)) { ?>
+                                    <img src="<?php echo $navPicPath; ?>" alt="Profile" class="w-8 h-8 rounded-lg object-cover border border-indigo-200">
+                                <?php } else { ?>
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center border border-indigo-200">
+                                        <?php echo htmlspecialchars($navInitial, ENT_QUOTES, 'UTF-8'); ?>
+                                    </div>
+                                <?php } ?>
                                 <span class="hidden lg:inline-block text-xs font-semibold text-slate-700 max-w-[100px] truncate">
                                     <?php echo Session::get('name'); ?>
                                 </span>
@@ -198,6 +227,5 @@
         }
     </script>
 
-    <!-- Main Content Wrapper -->
     <!-- Main Content Wrapper -->
     <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

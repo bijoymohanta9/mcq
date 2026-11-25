@@ -21,6 +21,17 @@
 
     $currentPage = basename($_SERVER['PHP_SELF']);
 
+    // Resolve admin role (admin / co-admin)
+    $rawRole = $_SESSION['adminRole'] ?? Session::get('adminRole') ?? $_SESSION['adminUser'] ?? Session::get('adminUser') ?? 'admin';
+    $adminRole = strtolower(trim((string)$rawRole));
+    if (!in_array($adminRole, array('admin', 'co-admin'), true)) {
+        $adminRole = 'admin';
+    }
+    $_SESSION['adminRole'] = $adminRole;
+    if (method_exists('Session', 'set')) {
+        Session::set('adminRole', $adminRole);
+    }
+
     // Dropdown Active State Helpers
     $isQuestionActive = in_array($currentPage, ['quesadd.php', 'queslist.php', 'add_category_subject.php']);
     $isCircularActive = in_array($currentPage, ['circular_add.php', 'circular_list.php']);
@@ -120,6 +131,11 @@
                         <i class="fa-solid fa-trophy text-amber-400"></i> Leaderboard
                     </a>
 
+                    <!-- Role Badge -->
+                    <span class="ml-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider <?php echo ($adminRole === 'co-admin') ? 'bg-amber-500/15 text-amber-300 border border-amber-400/30' : 'bg-indigo-500/15 text-indigo-300 border border-indigo-400/30'; ?>">
+                        <?php echo htmlspecialchars($adminRole, ENT_QUOTES, 'UTF-8'); ?>
+                    </span>
+
                     <!-- Logout -->
                     <a href="?action=logout" class="ml-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-600 transition flex items-center gap-1.5 border border-rose-500/20 hover:border-transparent">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -136,6 +152,11 @@
 
         <!-- Mobile Drawer Menu -->
         <div id="adminMobileMenu" class="hidden lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-4 space-y-1">
+            <div class="px-3 py-1">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider <?php echo ($adminRole === 'co-admin') ? 'bg-amber-500/15 text-amber-300 border border-amber-400/30' : 'bg-indigo-500/15 text-indigo-300 border border-indigo-400/30'; ?>">
+                    Role: <?php echo htmlspecialchars($adminRole, ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+            </div>
             <a href="index.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
                 <i class="fa-solid fa-house w-5"></i> Home
             </a>

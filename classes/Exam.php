@@ -168,8 +168,8 @@ public function getActiveCirculars($cat_id = null) {
     return $this->db->select($query);
 }
 
-public function saveExamResult($userId, $categoryId, $subjectId, $total, $score, $wrong) {
-    $userId      = (int)$this->fm->validation($userId);
+public function saveExamResult($userid, $categoryId, $subjectId, $total, $score, $wrong) {
+    $userid      = (int)$this->fm->validation($userid);
     $categoryId  = (int)$this->fm->validation($categoryId);
     $subjectId   = (int)$this->fm->validation($subjectId);
     $total       = (int)$this->fm->validation($total);
@@ -186,7 +186,7 @@ public function saveExamResult($userId, $categoryId, $subjectId, $total, $score,
     $query = "INSERT INTO tbl_exam_history 
               (attempt_code, user_id, category_id, subject_id, total_questions, correct_answers, wrong_answers, total_marks, percentage, status, exam_date) 
               VALUES 
-              ('$attemptCode', '$userId', '$categoryId', '$subjectId', '$total', '$score', '$wrong', '$marks', '$percentage', '$status', '$examDate')";
+              ('$attemptCode', '$userid', '$categoryId', '$subjectId', '$total', '$score', '$wrong', '$marks', '$percentage', '$status', '$examDate')";
 
     $inserted = $this->db->insert($query);
 
@@ -197,8 +197,8 @@ public function saveExamResult($userId, $categoryId, $subjectId, $total, $score,
     }
 }
 
-public function createSubscriptionRequest($data, $userId) {
-    $userId         = (int)$userId;
+public function createSubscriptionRequest($data, $userid) {
+    $userid         = (int)$userid;
     $category_id    = (int)$this->fm->validation($data['category_id']);
     $exam_type      = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['exam_type']));
     $duration       = mysqli_real_escape_string($this->db->link, $this->fm->validation($data['duration']));
@@ -212,7 +212,7 @@ public function createSubscriptionRequest($data, $userId) {
     }
 
     $query = "INSERT INTO tbl_subscription(user_id, category_id, exam_type, duration, amount, payment_method, trx_id, sender_number, status) 
-              VALUES('$userId', '$category_id', '$exam_type', '$duration', '$amount', '$payment_method', '$trx_id', '$sender_number', 'pending')";
+              VALUES('$userid', '$category_id', '$exam_type', '$duration', '$amount', '$payment_method', '$trx_id', '$sender_number', 'pending')";
 
     $inserted = $this->db->insert($query);
 
@@ -223,9 +223,9 @@ public function createSubscriptionRequest($data, $userId) {
     }
 }
 
-public function getSubscriptionByUserId($userId) {
-    $userId = (int)$userId;
-    $query  = "SELECT * FROM tbl_subscription WHERE user_id = '$userId' ORDER BY id DESC";
+public function getSubscriptionByuserid($userid) {
+    $userid = (int)$userid;
+    $query  = "SELECT * FROM tbl_subscription WHERE user_id = '$userid' ORDER BY id DESC";
     $result = $this->db->select($query);
     return $result;
 }
@@ -263,8 +263,8 @@ public function getQueByOrder() {
     return $result;
 }
 
-public function getUserExamHistory($userId) {
-    $userId = mysqli_real_escape_string($this->db->link, $userId);
+public function getUserExamHistory($userid) {
+    $userid = mysqli_real_escape_string($this->db->link, $userid);
     
     $query = "SELECT h.*, 
                      c.category_name, 
@@ -272,7 +272,7 @@ public function getUserExamHistory($userId) {
               FROM tbl_exam_history h 
               LEFT JOIN tbl_category c ON h.category_id = c.id 
               LEFT JOIN tbl_subject s ON h.subject_id = s.id 
-              WHERE h.user_id = '$userId' 
+              WHERE h.user_id = '$userid' 
               ORDER BY h.id DESC";
               
     $result = $this->db->select($query);
@@ -287,11 +287,11 @@ public function getLeaderboardByCategory($category_id = 0) {
         $whereClause = "WHERE h.category_id = '$category_id'";
     }
 
-    $query = "SELECT u.userId AS user_id, u.name, u.email, 
+    $query = "SELECT u.userid AS user_id, u.name, u.email, 
                      SUM(h.total_marks) as total_score, 
                      COUNT(h.id) as total_attempt 
               FROM tbl_exam_history h 
-              INNER JOIN tbl_user u ON h.user_id = u.userId 
+              INNER JOIN tbl_user u ON h.user_id = u.userid 
               $whereClause
               GROUP BY h.user_id 
               ORDER BY total_score DESC, total_attempt ASC 
@@ -319,12 +319,12 @@ public function getFilteredLeaderboard($category_id, $subject_id = 0, $attempts_
         $havingClause = "HAVING total_attempt = '$attempts_limit'";
     }
 
-    $query = "SELECT u.userId, u.name, u.email, 
+    $query = "SELECT u.userid, u.name, u.email, 
                      SUM(h.total_marks) as total_score, 
                      COUNT(h.id) as total_attempt,
                      AVG(h.percentage) as avg_percentage
               FROM tbl_exam_history h 
-              INNER JOIN tbl_user u ON h.user_id = u.userId 
+              INNER JOIN tbl_user u ON h.user_id = u.userid 
               $whereClause 
               GROUP BY h.user_id 
               $havingClause
@@ -509,7 +509,7 @@ public function getAllSubjects() {
 public function getAllSubscriptions() {
     $query = "SELECT s.*, u.name as user_name, u.email 
               FROM tbl_subscription s 
-              JOIN tbl_user u ON s.user_id = u.userId 
+              JOIN tbl_user u ON s.user_id = u.userid 
               ORDER BY s.id DESC";
     return $this->db->select($query);
 }
@@ -562,7 +562,7 @@ public function getFilteredSubscriptionsCount($search = '', $status = '', $metho
     $whereSql = $this->buildSubscriptionWhere($search, $status, $method, $package, $fromDate, $toDate);
     $query = "SELECT COUNT(*) AS total 
               FROM tbl_subscription s 
-              JOIN tbl_user u ON s.user_id = u.userId 
+              JOIN tbl_user u ON s.user_id = u.userid 
               {$whereSql}";
     $result = $this->db->select($query);
     if ($result) {
@@ -580,7 +580,7 @@ public function getFilteredSubscriptionsPaginated($search = '', $status = '', $m
 
     $query = "SELECT s.*, u.name as user_name, u.email 
               FROM tbl_subscription s 
-              JOIN tbl_user u ON s.user_id = u.userId 
+              JOIN tbl_user u ON s.user_id = u.userid 
               {$whereSql} 
               ORDER BY s.id DESC 
               LIMIT {$limit} OFFSET {$offset}";
@@ -824,10 +824,9 @@ public function updateQuestionById($id, $data) {
     if ($id <= 0 || $category_id <= 0 || $subject_id <= 0 || $ques === '') {
         return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>ক্যাটাগরি, বিষয় এবং প্রশ্ন সঠিকভাবে পূরণ করুন!</div>";
     }
-
-    $updateQuesQuery = "UPDATE tbl_ques 
-                        SET quesNo = '$quesNo', category_id = '$category_id', subject_id = '$subject_id', ques = '$ques' 
-                        WHERE id = '$id'";
+	$updateQuesQuery = "UPDATE tbl_ques 
+                    SET category_id = '$category_id', subject_id = '$subject_id', ques = '$ques' 
+                    WHERE id = '$id'";					
     $updatedQues = $this->db->update($updateQuesQuery);
 
     if ($updatedQues) {
@@ -847,19 +846,243 @@ public function updateQuestionById($id, $data) {
 
     return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>প্রশ্ন আপডেট করা যায়নি!</div>";
 }
+// ইউজারের প্রোফাইল তথ্য আনা (tbl_user)
+public function getUserProfileById($userid) {
+    $userid = (int)$userid;
+    if ($userid <= 0) return false;
 
+    $query = "SELECT * FROM tbl_user WHERE userid = '$userid' LIMIT 1";
+    $result = $this->db->select($query);
+    if ($result && $result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    return false;
+}
+
+// tbl_subscription থেকে Subscription Status ও Quantity আনা
+public function getUserSubscriptionSummary($userid) {
+    $userid = (int)$userid;
+    $summary = array(
+        'has_subscription' => false,
+        'total_qty'        => 0,
+        'active_qty'       => 0,
+        'pending_qty'      => 0,
+        'status_label'     => 'No Subscription'
+    );
+
+    if ($userid <= 0) {
+        return $summary;
+    }
+
+    $query = "SELECT 
+                COUNT(*) AS total_qty,
+                SUM(CASE WHEN LOWER(TRIM(status)) = 'approved' AND (expire_date IS NULL OR expire_date >= NOW()) THEN 1 ELSE 0 END) AS active_qty,
+                SUM(CASE WHEN LOWER(TRIM(status)) = 'pending' THEN 1 ELSE 0 END) AS pending_qty
+              FROM tbl_subscription 
+              WHERE user_id = '$userid'";
+
+    $result = $this->db->select($query);
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $totalQty   = (int)($row['total_qty'] ?? 0);
+        $activeQty  = (int)($row['active_qty'] ?? 0);
+        $pendingQty = (int)($row['pending_qty'] ?? 0);
+
+        $summary['total_qty']   = $totalQty;
+        $summary['active_qty']  = $activeQty;
+        $summary['pending_qty'] = $pendingQty;
+
+        if ($activeQty > 0) {
+            $summary['has_subscription'] = true;
+            $summary['status_label']     = 'Active Subscription';
+        } elseif ($pendingQty > 0) {
+            $summary['has_subscription'] = true;
+            $summary['status_label']     = 'Pending Verification';
+        } elseif ($totalQty > 0) {
+            $summary['has_subscription'] = false;
+            $summary['status_label']     = 'Expired / Inactive';
+        } else {
+            $summary['has_subscription'] = false;
+            $summary['status_label']     = 'No Subscription';
+        }
+    }
+
+    return $summary;
+}
+
+// প্রোফাইল আপডেট (name, email, mob_no, gender, picture)
+public function updateUserProfileWithExtras($userid, $postData, $fileData) {
+    $userid = (int)$userid;
+    if ($userid <= 0) {
+        return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>Invalid user!</div>";
+    }
+
+    $currentUser = $this->getUserProfileById($userid);
+    if (!$currentUser) {
+        return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>User not found!</div>";
+    }
+
+    $name   = mysqli_real_escape_string($this->db->link, trim($this->fm->validation($postData['name'] ?? ($currentUser['name'] ?? ''))));
+    $email  = mysqli_real_escape_string($this->db->link, trim($this->fm->validation($postData['email'] ?? ($currentUser['email'] ?? ''))));
+    $mob_no = mysqli_real_escape_string($this->db->link, trim($this->fm->validation($postData['mob_no'] ?? '')));
+	$mob_no_raw = trim($this->fm->validation($postData['mob_no'] ?? ''));
+
+// খালি না হলে ১১ ডিজিটের বৈধ বাংলাদেশি মোবাইল নম্বর (013-019) যাচাই
+if ($mob_no_raw !== '' && !preg_match('/^01[3-9][0-9]{8}$/', $mob_no_raw)) {
+    return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 017XXXXXXXX)।</div>";
+}
+
+$mob_no = mysqli_real_escape_string($this->db->link, $mob_no_raw);
+    $gender = mysqli_real_escape_string($this->db->link, trim($this->fm->validation($postData['gender'] ?? '')));
+
+    $pictureName = $currentUser['picture'] ?? '';
+
+    if (isset($fileData['picture']) && isset($fileData['picture']['error']) && $fileData['picture']['error'] === UPLOAD_ERR_OK) {
+        $tmpName  = $fileData['picture']['tmp_name'];
+        $origName = $fileData['picture']['name'];
+        $ext      = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+        $allowed  = array('jpg', 'jpeg', 'png', 'webp', 'gif');
+
+        if (!in_array($ext, $allowed, true)) {
+            return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>শুধুমাত্র JPG, JPEG, PNG, WEBP অথবা GIF ছবি আপলোড করুন।</div>";
+        }
+
+        $uploadDir = realpath(dirname(__FILE__) . '/../') . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'users' . DIRECTORY_SEPARATOR;
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $newFileName = 'user_' . $userid . '_' . time() . '_' . mt_rand(1000, 9999) . '.' . $ext;
+        $targetPath  = $uploadDir . $newFileName;
+
+        if (move_uploaded_file($tmpName, $targetPath)) {
+            if (!empty($pictureName)) {
+                $oldPath = $uploadDir . basename($pictureName);
+                if (is_file($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+            $pictureName = $newFileName;
+        } else {
+            return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>ছবি আপলোড করতে সমস্যা হয়েছে।</div>";
+        }
+    }
+
+    $picEscaped = mysqli_real_escape_string($this->db->link, $pictureName);
+
+    $query = "UPDATE tbl_user 
+              SET name = '$name', 
+                  email = '$email', 
+                  mob_no = '$mob_no', 
+                  gender = '$gender', 
+                  picture = '$picEscaped' 
+              WHERE userid = '$userid'";
+
+    $updated = $this->db->update($query);
+    if ($updated) {
+        return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200'>প্রোফাইল সফলভাবে আপডেট হয়েছে!</div>";
+    }
+
+    return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>প্রোফাইল আপডেট করা যায়নি।</div>";
+}
+// ইউজারের পরীক্ষার রেকর্ড ফিল্টার ও পেজিনেশনসহ গণনা করার মেথড
+public function getFilteredExamHistoryCount($userId, $category_id = 0, $subject_id = 0, $status = '', $search = '') {
+    $userId      = (int)$userId;
+    $category_id = (int)$category_id;
+    $subject_id  = (int)$subject_id;
+    $status      = trim($status);
+    $search      = mysqli_real_escape_string($this->db->link, trim($search));
+
+    $where = "WHERE h.user_id = '$userId'";
+    if ($category_id > 0) {
+        $where .= " AND h.category_id = '$category_id'";
+    }
+    if ($subject_id > 0) {
+        $where .= " AND h.subject_id = '$subject_id'";
+    }
+    if ($status === 'Passed' || $status === 'Failed') {
+        $safeStatus = mysqli_real_escape_string($this->db->link, $status);
+        $where .= " AND h.status = '$safeStatus'";
+    }
+    if ($search !== '') {
+        $where .= " AND (h.attempt_code LIKE '%$search%' OR c.category_name LIKE '%$search%' OR s.subject_name LIKE '%$search%')";
+    }
+
+    $query = "SELECT COUNT(*) AS total 
+              FROM tbl_exam_history h 
+              LEFT JOIN tbl_category c ON h.category_id = c.id 
+              LEFT JOIN tbl_subject s ON h.subject_id = s.id 
+              $where";
+
+    $result = $this->db->select($query);
+    if ($result) {
+        $row = $result->fetch_assoc();
+        return (int)($row['total'] ?? 0);
+    }
+    return 0;
+}
+
+// ইউজারের পরীক্ষার রেকর্ড ফিল্টার ও পেজিনেশনসহ আনার মেথড
+public function getFilteredExamHistoryPaginated($userId, $category_id = 0, $subject_id = 0, $status = '', $search = '', $limit = 10, $offset = 0) {
+    $userId      = (int)$userId;
+    $category_id = (int)$category_id;
+    $subject_id  = (int)$subject_id;
+    $status      = trim($status);
+    $search      = mysqli_real_escape_string($this->db->link, trim($search));
+    $limit       = max(1, (int)$limit);
+    $offset      = max(0, (int)$offset);
+
+    $where = "WHERE h.user_id = '$userId'";
+    if ($category_id > 0) {
+        $where .= " AND h.category_id = '$category_id'";
+    }
+    if ($subject_id > 0) {
+        $where .= " AND h.subject_id = '$subject_id'";
+    }
+    if ($status === 'Passed' || $status === 'Failed') {
+        $safeStatus = mysqli_real_escape_string($this->db->link, $status);
+        $where .= " AND h.status = '$safeStatus'";
+    }
+    if ($search !== '') {
+        $where .= " AND (h.attempt_code LIKE '%$search%' OR c.category_name LIKE '%$search%' OR s.subject_name LIKE '%$search%')";
+    }
+
+    $query = "SELECT h.*, 
+                     c.category_name, 
+                     s.subject_name 
+              FROM tbl_exam_history h 
+              LEFT JOIN tbl_category c ON h.category_id = c.id 
+              LEFT JOIN tbl_subject s ON h.subject_id = s.id 
+              $where 
+              ORDER BY h.id DESC 
+              LIMIT $limit OFFSET $offset";
+
+    return $this->db->select($query);
+}
 // ================= Category & Subject Management =================
-
 public function updateCategory($id, $name) {
     $id = (int)$id;
-    $name = trim($this->db->link->real_escape_string($name));
-    if ($id <= 0 || $name === '') return array(false, "সঠিক ক্যাটাগরির নাম দিন।");
+    $name = trim($this->fm->validation($name));
 
-    $query = "UPDATE tbl_category SET category_name = '$name' WHERE id = '$id'";
-    if ($this->db->update($query)) {
-        return array(true, "ক্যাটাগরি সফলভাবে আপডেট হয়েছে।");
+    if ($id <= 0 || $name === '') {
+        return array(false, "সঠিক ক্যাটাগরির নাম দিন!");
     }
-    return array(false, "ক্যাটাগরি আপডেট করা যায়নি।");
+
+    $safeName = mysqli_real_escape_string($this->db->link, $name);
+
+    // ১. মূল ক্যাটাগরি টেবিল আপডেট
+    $query = "UPDATE tbl_category SET category_name = '$safeName' WHERE id = '$id'";
+    $updated = $this->db->update($query);
+
+    if ($updated) {
+        // ২. tbl_subscription টেবিলেও এই category_id অনুযায়ী exam_type আপডেট
+        $subQuery = "UPDATE tbl_subscription SET exam_type = '$safeName' WHERE category_id = '$id'";
+        $this->db->update($subQuery);
+
+        return array(true, "ক্যাটাগরি এবং সাবস্ক্রিপশন টেবিল সফলভাবে আপডেট হয়েছে!");
+    }
+
+    return array(false, "ক্যাটাগরি আপডেট করা যায়নি!");
 }
 
 public function updateSubject($id, $name) {

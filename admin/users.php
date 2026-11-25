@@ -3,6 +3,9 @@
     include_once ($filepath.'/inc/header.php');
     include_once ($filepath.'/../classes/User.php');
     $usr = new User();
+
+    $currentRole = strtolower(trim($_SESSION['adminRole'] ?? $_SESSION['adminUser'] ?? 'admin'));
+    $isCoAdmin = ($currentRole === 'co-admin');
 ?>
 
 <?php 
@@ -17,8 +20,12 @@
     }
 
     if (isset($_GET['del'])) {
-        $delid = (int)$_GET['del'];
-        $delUser = $usr->deleteUser($delid);
+        if ($isCoAdmin) {
+            $delUser = "Co-Admin এর ইউজার মুছে ফেলার অনুমতি নেই।";
+        } else {
+            $delid = (int)$_GET['del'];
+            $delUser = $usr->deleteUser($delid);
+        }
     }
 ?>
 
@@ -122,12 +129,14 @@
                                         </a>
                                     <?php endif; ?>
 
-                                    <a onclick="return confirm('আপনি কি নিশ্চিত যে এই ইউজারকে স্থায়ীভাবে মুছে ফেলবেন?')" 
-                                       href="?del=<?php echo $result['userid'];?>" 
-                                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg font-semibold transition border border-rose-200" title="Remove User">
-                                        <i class="fa-solid fa-trash-can text-[11px]"></i>
-                                        <span>মুছুন</span>
-                                    </a>
+                                    <?php if (!$isCoAdmin): ?>
+                                        <a onclick="return confirm('আপনি কি নিশ্চিত যে এই ইউজারকে স্থায়ীভাবে মুছে ফেলবেন?')" 
+                                           href="?del=<?php echo $result['userid'];?>" 
+                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg font-semibold transition border border-rose-200" title="Remove User">
+                                            <i class="fa-solid fa-trash-can text-[11px]"></i>
+                                            <span>মুছুন</span>
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

@@ -4,6 +4,9 @@ include_once ($filepath.'/inc/header.php');
 include_once ($filepath.'/../classes/Exam.php');
 $exm = new Exam();
 
+$currentRole = strtolower(trim($_SESSION['adminRole'] ?? $_SESSION['adminUser'] ?? 'admin'));
+$isCoAdmin = ($currentRole === 'co-admin');
+
 $msgCat = '';
 $msgSub = '';
 $msgType = 'success';
@@ -15,17 +18,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msgCat = $message;
         $msgType = $ok ? 'success' : 'error';
     } elseif (isset($_POST['delete_cat'])) {
-        list($ok, $message) = $exm->deleteCategorySafely($_POST['category_id'] ?? 0);
-        $msgCat = $message;
-        $msgType = $ok ? 'success' : 'error';
+        if ($isCoAdmin) {
+            $msgCat = "Co-Admin এর Delete করার অনুমতি নেই।";
+            $msgType = 'error';
+        } else {
+            list($ok, $message) = $exm->deleteCategorySafely($_POST['category_id'] ?? 0);
+            $msgCat = $message;
+            $msgType = $ok ? 'success' : 'error';
+        }
     } elseif (isset($_POST['update_sub'])) {
         list($ok, $message) = $exm->updateSubject($_POST['subject_id'] ?? 0, $_POST['subject_name'] ?? '');
         $msgSub = $message;
         $msgType = $ok ? 'success' : 'error';
     } elseif (isset($_POST['delete_sub'])) {
-        list($ok, $message) = $exm->deleteSubjectSafely($_POST['subject_id'] ?? 0);
-        $msgSub = $message;
-        $msgType = $ok ? 'success' : 'error';
+        if ($isCoAdmin) {
+            $msgSub = "Co-Admin এর Delete করার অনুমতি নেই।";
+            $msgType = 'error';
+        } else {
+            list($ok, $message) = $exm->deleteSubjectSafely($_POST['subject_id'] ?? 0);
+            $msgSub = $message;
+            $msgType = $ok ? 'success' : 'error';
+        }
     } elseif (isset($_POST['add_cat'])) {
         $cat_name = trim(mysqli_real_escape_string($db->link, $_POST['category_name'] ?? ''));
         if ($cat_name !== '') {
@@ -97,10 +110,12 @@ $subjects = $exm->getAllSubjects();
                                         <button type="submit" name="update_cat" class="w-full px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold">Save Changes</button>
                                     </form>
                                 </details>
-                                <form method="post" onsubmit="return confirm('এই ক্যাটাগরি Delete করতে চান? ব্যবহৃত হলে Delete হবে না।');">
-                                    <input type="hidden" name="category_id" value="<?php echo (int)$cat['id']; ?>">
-                                    <button type="submit" name="delete_cat" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-[11px] font-bold"><i class="fa-solid fa-trash"></i> Delete</button>
-                                </form>
+                                <?php if (!$isCoAdmin): ?>
+                                    <form method="post" onsubmit="return confirm('এই ক্যাটাগরি Delete করতে চান? ব্যবহৃত হলে Delete হবে না।');">
+                                        <input type="hidden" name="category_id" value="<?php echo (int)$cat['id']; ?>">
+                                        <button type="submit" name="delete_cat" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-[11px] font-bold"><i class="fa-solid fa-trash"></i> Delete</button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endwhile; else: ?>
@@ -151,10 +166,12 @@ $subjects = $exm->getAllSubjects();
                                         <button type="submit" name="update_sub" class="w-full px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold">Save Changes</button>
                                     </form>
                                 </details>
-                                <form method="post" onsubmit="return confirm('এই বিষয় Delete করতে চান? ব্যবহৃত হলে Delete হবে না।');">
-                                    <input type="hidden" name="subject_id" value="<?php echo (int)$sub['id']; ?>">
-                                    <button type="submit" name="delete_sub" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-[11px] font-bold"><i class="fa-solid fa-trash"></i> Delete</button>
-                                </form>
+                                <?php if (!$isCoAdmin): ?>
+                                    <form method="post" onsubmit="return confirm('এই বিষয় Delete করতে চান? ব্যবহৃত হলে Delete হবে না।');">
+                                        <input type="hidden" name="subject_id" value="<?php echo (int)$sub['id']; ?>">
+                                        <button type="submit" name="delete_sub" class="px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-[11px] font-bold"><i class="fa-solid fa-trash"></i> Delete</button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endwhile; else: ?>

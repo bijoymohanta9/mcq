@@ -14,6 +14,8 @@ class Admin{
 	}
 
 	public function getAdminData($data){
+		Session::set("adminRole", strtolower(trim($value['adminUser'])));
+		$_SESSION['adminRole'] = strtolower(trim($value['adminUser']));
     
     $adminUser = $this->fm->validation($data['adminUser']);
     $adminPass = $this->fm->validation($data['adminPass']);

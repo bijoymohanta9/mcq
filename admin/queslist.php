@@ -4,10 +4,16 @@ include_once($filepath . '/inc/header.php');
 include_once($filepath . '/../classes/Exam.php');
 
 $exm = new Exam();
+$currentRole = strtolower(trim($_SESSION['adminRole'] ?? $_SESSION['adminUser'] ?? 'admin'));
+$isCoAdmin = ($currentRole === 'co-admin');
 
 if (isset($_GET['delque'])) {
-    $quesno = (int)$_GET['delque'];
-    $delQue = $exm->delQuestion($quesno);
+    if ($isCoAdmin) {
+        $delQue = "<div class='p-3 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold mb-4'>Co-Admin এর Remove করার অনুমতি নেই।</div>";
+    } else {
+        $quesno = (int)$_GET['delque'];
+        $delQue = $exm->delQuestion($quesno);
+    }
 }
 
 $category_id = isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0;
@@ -139,11 +145,13 @@ $end_number = min($offset + $per_page, $total_questions);
                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-semibold transition">
                                             <i class="fa-regular fa-pen-to-square"></i><span>Edit</span>
                                         </a>
-                                        <a onclick="return confirm('Are You Sure to Remove')"
-                                           href="?<?php echo htmlspecialchars(http_build_query(array_merge($queryParams, array('page' => $page, 'delque' => $result['quesNo']))), ENT_QUOTES, 'UTF-8'); ?>"
-                                           class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white text-xs font-semibold transition">
-                                            <i class="fa-regular fa-trash-can"></i><span>Remove</span>
-                                        </a>
+                                        <?php if (!$isCoAdmin): ?>
+                                            <a onclick="return confirm('Are You Sure to Remove')"
+                                               href="?<?php echo htmlspecialchars(http_build_query(array_merge($queryParams, array('page' => $page, 'delque' => $result['quesNo']))), ENT_QUOTES, 'UTF-8'); ?>"
+                                               class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white text-xs font-semibold transition">
+                                                <i class="fa-regular fa-trash-can"></i><span>Remove</span>
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

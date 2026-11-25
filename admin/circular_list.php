@@ -6,10 +6,18 @@ if (session_status() === PHP_SESSION_NONE) {
 include_once '../classes/Exam.php';
 $exm = new Exam();
 
-// Delete handler: delete করার পর একই filter-এ ফিরে যাবে
+$currentRole = strtolower(trim($_SESSION['adminRole'] ?? $_SESSION['adminUser'] ?? 'admin'));
+$isCoAdmin = ($currentRole === 'co-admin');
+
+// Delete handler: delete করার পর একই filter-এ ফিরে যাবে (শুধুমাত্র admin এর জন্য)
 if (isset($_GET['del_id'])) {
-    $del_id = (int)$_GET['del_id'];
-    $deleteMessage = $exm->deleteCircular($del_id);
+    if ($isCoAdmin) {
+        $_SESSION['msg'] = "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>Co-Admin এর Delete করার অনুমতি নেই।</div>";
+    } else {
+        $del_id = (int)$_GET['del_id'];
+        $deleteMessage = $exm->deleteCircular($del_id);
+        $_SESSION['msg'] = $deleteMessage;
+    }
 
     $returnParams = array(
         'category_id' => isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0,
@@ -18,7 +26,6 @@ if (isset($_GET['del_id'])) {
         'per_page' => isset($_GET['per_page']) ? (int)$_GET['per_page'] : 10,
         'page' => isset($_GET['page']) ? (int)$_GET['page'] : 1
     );
-    $_SESSION['msg'] = $deleteMessage;
     header("Location: circular_list.php?" . http_build_query($returnParams));
     exit();
 }
@@ -222,11 +229,13 @@ $toRecord = min($offset + $per_page, $total_circulars);
                                            class="inline-flex items-center justify-center w-8 h-8 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition" title="Edit">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
-                                        <a href="circular_list.php?<?php echo htmlspecialchars(http_build_query(array_merge($queryParams, array('page' => $pageNo, 'del_id' => (int)$row['id']))), ENT_QUOTES, 'UTF-8'); ?>"
-                                           onclick="return confirm('আপনি কি নিশ্চিত যে এই সার্কুলারটি মুছে ফেলতে চান?');"
-                                           class="inline-flex items-center justify-center w-8 h-8 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition" title="Delete">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </a>
+                                        <?php if (!$isCoAdmin): ?>
+                                            <a href="circular_list.php?<?php echo htmlspecialchars(http_build_query(array_merge($queryParams, array('page' => $pageNo, 'del_id' => (int)$row['id']))), ENT_QUOTES, 'UTF-8'); ?>"
+                                               onclick="return confirm('আপনি কি নিশ্চিত যে এই সার্কুলারটি মুছে ফেলতে চান?');"
+                                               class="inline-flex items-center justify-center w-8 h-8 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition" title="Delete">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

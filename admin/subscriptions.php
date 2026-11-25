@@ -3,13 +3,20 @@
     include '../classes/Exam.php';
     $exm = new Exam();
 
-    // Handle Status Update Action
+    $currentRole = strtolower(trim($_SESSION['adminRole'] ?? $_SESSION['adminUser'] ?? 'admin'));
+    $isCoAdmin = ($currentRole === 'co-admin');
+
+    // Handle Status Update Action (শুধুমাত্র admin এর জন্য)
     $msg = "";
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
-        $sub_id   = $_POST['sub_id'];
-        $status   = $_POST['status'];
-        $duration = $_POST['duration'];
-        $msg = $exm->updateSubscriptionStatus($sub_id, $status, $duration);
+        if ($isCoAdmin) {
+            $msg = "<div class='p-3 mb-4 text-sm text-rose-800 rounded-lg bg-rose-50 border border-rose-200 font-bold'>Co-Admin এর Subscription Status পরিবর্তন করার অনুমতি নেই।</div>";
+        } else {
+            $sub_id   = $_POST['sub_id'];
+            $status   = $_POST['status'];
+            $duration = $_POST['duration'];
+            $msg = $exm->updateSubscriptionStatus($sub_id, $status, $duration);
+        }
     }
 
     // Filter Inputs (GET)
@@ -243,20 +250,24 @@
                         
                         <!-- Action Form -->
                         <td class="p-4 text-center">
-                            <form action="" method="POST" class="flex items-center justify-center gap-2">
-                                <input type="hidden" name="sub_id" value="<?php echo $row['id']; ?>">
-                                <input type="hidden" name="duration" value="<?php echo htmlspecialchars($row['duration']); ?>">
-                                
-                                <select name="status" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none bg-white">
-                                    <option value="pending" <?php if($currentStatus=='pending') echo 'selected'; ?>>Pending</option>
-                                    <option value="approved" <?php if($currentStatus=='approved') echo 'selected'; ?>>Approved</option>
-                                    <option value="rejected" <?php if($currentStatus=='rejected') echo 'selected'; ?>>Rejected</option>
-                                </select>
-                                
-                                <button type="submit" name="update_status" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg transition text-xs shadow-sm">
-                                    Save
-                                </button>
-                            </form>
+                            <?php if (!$isCoAdmin): ?>
+                                <form action="" method="POST" class="flex items-center justify-center gap-2">
+                                    <input type="hidden" name="sub_id" value="<?php echo $row['id']; ?>">
+                                    <input type="hidden" name="duration" value="<?php echo htmlspecialchars($row['duration']); ?>">
+                                    
+                                    <select name="status" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none bg-white">
+                                        <option value="pending" <?php if($currentStatus=='pending') echo 'selected'; ?>>Pending</option>
+                                        <option value="approved" <?php if($currentStatus=='approved') echo 'selected'; ?>>Approved</option>
+                                        <option value="rejected" <?php if($currentStatus=='rejected') echo 'selected'; ?>>Rejected</option>
+                                    </select>
+                                    
+                                    <button type="submit" name="update_status" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg transition text-xs shadow-sm">
+                                        Save
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <span class="text-xs text-slate-400 font-semibold">View Only</span>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php } } else { ?>

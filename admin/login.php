@@ -1,10 +1,24 @@
 <?php 
     $filepath = realpath(dirname(__FILE__));
+    include_once ($filepath.'/../lib/Session.php');
+    Session::init();
     include_once ($filepath.'/../classes/Admin.php');
     $ad = new Admin();
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $selectedRole = isset($_POST['adminUser']) ? strtolower(trim($_POST['adminUser'])) : 'admin';
+        if (!in_array($selectedRole, array('admin', 'co-admin'), true)) {
+            $selectedRole = 'admin';
+        }
+        $_SESSION['pending_admin_role'] = $selectedRole;
+
         $adminData = $ad->getAdminData($_POST);
+
+        if (Session::get("adminLogin") == true || Session::get("login") == true || isset($_SESSION['adminId']) || isset($_SESSION['adminUser'])) {
+            Session::set("adminRole", $selectedRole);
+            $_SESSION['adminRole'] = $selectedRole;
+            unset($_SESSION['pending_admin_role']);
+        }
     }
 ?>
 <!DOCTYPE html>
@@ -59,15 +73,18 @@
             <!-- Form Section -->
             <form action="" method="post" class="space-y-5">
                 
-                <!-- Username Input -->
+                <!-- Username Dropdown -->
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-2">ইউজারনেম</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
                             <i class="fa-solid fa-user text-xs"></i>
                         </span>
-                        <input type="text" name="adminUser" placeholder="ইউজারনেম লিখুন" required 
-                               class="w-full pl-11 pr-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                        <select name="adminUser" required 
+                                class="w-full pl-11 pr-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                            <option value="admin" class="bg-slate-900 text-slate-100" <?php echo ((isset($_POST['adminUser']) ? $_POST['adminUser'] : 'admin') === 'admin') ? 'selected' : ''; ?>>admin</option>
+                            <option value="co-admin" class="bg-slate-900 text-slate-100" <?php echo ((isset($_POST['adminUser']) ? $_POST['adminUser'] : '') === 'co-admin') ? 'selected' : ''; ?>>co-admin</option>
+                        </select>
                     </div>
                 </div>
 
