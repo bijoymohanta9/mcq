@@ -1,15 +1,19 @@
 <?php 
- $filepath = realpath(dirname(__FILE__));
+$filepath = realpath(dirname(__FILE__));
 include_once ($filepath.'/../lib/Database.php');
 include_once ($filepath.'/../helpers/Format.php');
+include_once ($filepath.'/../helpers/AuditLog.php');
 
 class Exam{
 	private $db;
 	private $fm;
+	private $audit;
+
 	function __construct()
 	{
-		$this->db = new Database();
-		$this->fm = new Format();
+		$this->db    = new Database();
+		$this->fm    = new Format();
+		$this->audit = new AuditLog($this->db);
 	}
 
     public function getCategories() {
@@ -217,6 +221,28 @@ public function createSubscriptionRequest($data, $userid) {
     $inserted = $this->db->insert($query);
 
     if ($inserted) {
+        $subId = (int)$this->db->link->insert_id;
+        $userInfo = $this->getUserProfileById($userid);
+
+        $this->audit->logSubscriptionActivity(
+            'request',
+            "নতুন সাবস্ক্রিপশন রিকোয়েস্ট জমা দিয়েছেন (Sub ID: #{$subId}, স্ট্যাটাস: pending)।",
+            array(
+                'actor_role'     => 'subscriber',
+                'user_id'        => $userid,
+                'user_name'      => is_array($userInfo) ? ($userInfo['name'] ?? '') : '',
+                'username'       => is_array($userInfo) ? ($userInfo['username'] ?? '') : '',
+                'email'          => is_array($userInfo) ? ($userInfo['email'] ?? '') : '',
+                'exam_type'      => $exam_type,
+                'duration'       => $duration,
+                'amount'         => $amount,
+                'payment_method' => $payment_method,
+                'trx_id'         => $trx_id,
+                'sender_number'  => $sender_number,
+                'page_name'      => 'subscription.php'
+            )
+        );
+
         return "<div class='p-3 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold mb-4'>পেমেন্ট রিকোয়েস্ট জমা হয়েছে! অ্যাডমিন ভেরিফাই করে এক্টিভ করে দেবে।</div>";
     } else {
         return "<div class='p-3 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold mb-4'>পেমেন্ট রিকোয়েস্ট পাঠাতে সমস্যা হয়েছে।</div>";
@@ -507,7 +533,7 @@ public function getAllSubjects() {
 
 // Get all subscriptions for Admin
 public function getAllSubscriptions() {
-    $query = "SELECT s.*, u.name as user_name, u.email 
+    $query = "SELECT s.*, u.name as user_name, u.username, u.email 
               FROM tbl_subscription s 
               JOIN tbl_user u ON s.user_id = u.userid 
               ORDER BY s.id DESC";
@@ -522,6 +548,7 @@ private function buildSubscriptionWhere($search = '', $status = '', $method = ''
         $safeSearch = mysqli_real_escape_string($this->db->link, trim($search));
         $conditions[] = "(
             u.name LIKE '%{$safeSearch}%' OR 
+            u.username LIKE '%{$safeSearch}%' OR 
             u.email LIKE '%{$safeSearch}%' OR 
             s.trx_id LIKE '%{$safeSearch}%' OR 
             s.sender_number LIKE '%{$safeSearch}%' OR 
@@ -578,7 +605,7 @@ public function getFilteredSubscriptionsPaginated($search = '', $status = '', $m
     $offset = max(0, (int)$offset);
     $whereSql = $this->buildSubscriptionWhere($search, $status, $method, $package, $fromDate, $toDate);
 
-    $query = "SELECT s.*, u.name as user_name, u.email 
+    $query = "SELECT s.*, u.name as user_name, u.username, u.email 
               FROM tbl_subscription s 
               JOIN tbl_user u ON s.user_id = u.userid 
               {$whereSql} 
@@ -598,6 +625,15 @@ public function updateSubscriptionStatus($sub_id, $status, $duration) {
     $sub_id   = mysqli_real_escape_string($this->db->link, $sub_id);
     $status   = mysqli_real_escape_string($this->db->link, $status);
     $duration = mysqli_real_escape_string($this->db->link, $duration);
+
+    $subRow = null;
+    $subLookup = $this->db->select("SELECT s.*, u.name AS user_name, u.username, u.email 
+                                    FROM tbl_subscription s 
+                                    LEFT JOIN tbl_user u ON s.user_id = u.userid 
+                                    WHERE s.id = '$sub_id' LIMIT 1");
+    if ($subLookup && $subLookup->num_rows > 0) {
+        $subRow = $subLookup->fetch_assoc();
+    }
 
     if (strtolower($status) == 'approved') {
         $start_date = date('Y-m-d H:i:s');
@@ -620,6 +656,45 @@ public function updateSubscriptionStatus($sub_id, $status, $duration) {
     $update_row = $this->db->link->query($query);
 
     if ($update_row) {
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            @session_start();
+        }
+        $actorRole = strtolower(trim((string)($_SESSION['adminRole'] ?? $_SESSION['adminUser'] ?? 'admin')));
+        if (!in_array($actorRole, array('admin', 'co-admin'), true)) {
+            $actorRole = 'admin';
+        }
+        $actorName = trim((string)($_SESSION['adminUser'] ?? $actorRole));
+
+        $oldStatus = is_array($subRow) ? (string)($subRow['status'] ?? '') : '';
+        $descExtra = "সাবস্ক্রিপশন #{$sub_id} এর স্ট্যাটাস '{$status}' করা হয়েছে";
+        if ($oldStatus !== '') {
+            $descExtra .= " (আগে ছিল: {$oldStatus})";
+        }
+        if (strtolower($status) === 'approved' && isset($start_date, $expire_date)) {
+            $descExtra .= " | Start: {$start_date} | Expire: {$expire_date}";
+        }
+
+        $this->audit->logSubscriptionActivity(
+            strtolower($status),
+            $descExtra,
+            array(
+                'actor_role'     => $actorRole,
+                'actor_name'     => $actorName,
+                'adminId'        => (int)($_SESSION['adminId'] ?? 0),
+                'user_id'        => is_array($subRow) ? (int)($subRow['user_id'] ?? 0) : 0,
+                'user_name'      => is_array($subRow) ? ($subRow['user_name'] ?? '') : '',
+                'username'       => is_array($subRow) ? ($subRow['username'] ?? '') : '',
+                'email'          => is_array($subRow) ? ($subRow['email'] ?? '') : '',
+                'exam_type'      => is_array($subRow) ? ($subRow['exam_type'] ?? '') : '',
+                'duration'       => is_array($subRow) ? ($subRow['duration'] ?? $duration) : $duration,
+                'amount'         => is_array($subRow) ? ($subRow['amount'] ?? '') : '',
+                'payment_method' => is_array($subRow) ? ($subRow['payment_method'] ?? '') : '',
+                'trx_id'         => is_array($subRow) ? ($subRow['trx_id'] ?? '') : '',
+                'sender_number'  => is_array($subRow) ? ($subRow['sender_number'] ?? '') : '',
+                'page_name'      => 'subscriptions.php'
+            )
+        );
+
         return "<div class='p-3 mb-4 text-sm text-green-800 rounded-lg bg-green-50 border border-green-200 font-bold'>Subscription status updated successfully!</div>";
     } else {
         return "<div class='p-3 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200 font-bold'>Failed to update: " . $this->db->link->error . "</div>";
@@ -846,6 +921,7 @@ public function updateQuestionById($id, $data) {
 
     return "<div class='p-4 mb-4 text-xs text-rose-700 bg-rose-100 rounded-xl font-bold'>প্রশ্ন আপডেট করা যায়নি!</div>";
 }
+
 // ইউজারের প্রোফাইল তথ্য আনা (tbl_user)
 public function getUserProfileById($userid) {
     $userid = (int)$userid;
@@ -924,15 +1000,14 @@ public function updateUserProfileWithExtras($userid, $postData, $fileData) {
 
     $name   = mysqli_real_escape_string($this->db->link, trim($this->fm->validation($postData['name'] ?? ($currentUser['name'] ?? ''))));
     $email  = mysqli_real_escape_string($this->db->link, trim($this->fm->validation($postData['email'] ?? ($currentUser['email'] ?? ''))));
-    $mob_no = mysqli_real_escape_string($this->db->link, trim($this->fm->validation($postData['mob_no'] ?? '')));
-	$mob_no_raw = trim($this->fm->validation($postData['mob_no'] ?? ''));
+    $mob_no_raw = trim($this->fm->validation($postData['mob_no'] ?? ''));
 
-// খালি না হলে ১১ ডিজিটের বৈধ বাংলাদেশি মোবাইল নম্বর (013-019) যাচাই
-if ($mob_no_raw !== '' && !preg_match('/^01[3-9][0-9]{8}$/', $mob_no_raw)) {
-    return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 017XXXXXXXX)।</div>";
-}
+    // খালি না হলে ১১ ডিজিটের বৈধ বাংলাদেশি মোবাইল নম্বর (013-019) যাচাই
+    if ($mob_no_raw !== '' && !preg_match('/^01[3-9][0-9]{8}$/', $mob_no_raw)) {
+        return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 017XXXXXXXX)।</div>";
+    }
 
-$mob_no = mysqli_real_escape_string($this->db->link, $mob_no_raw);
+    $mob_no = mysqli_real_escape_string($this->db->link, $mob_no_raw);
     $gender = mysqli_real_escape_string($this->db->link, trim($this->fm->validation($postData['gender'] ?? '')));
 
     $pictureName = $currentUser['picture'] ?? '';
@@ -985,6 +1060,7 @@ $mob_no = mysqli_real_escape_string($this->db->link, $mob_no_raw);
 
     return "<div class='p-3 mb-4 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200'>প্রোফাইল আপডেট করা যায়নি।</div>";
 }
+
 // ইউজারের পরীক্ষার রেকর্ড ফিল্টার ও পেজিনেশনসহ গণনা করার মেথড
 public function getFilteredExamHistoryCount($userId, $category_id = 0, $subject_id = 0, $status = '', $search = '') {
     $userId      = (int)$userId;
@@ -1059,6 +1135,7 @@ public function getFilteredExamHistoryPaginated($userId, $category_id = 0, $subj
 
     return $this->db->select($query);
 }
+
 // ================= Category & Subject Management =================
 public function updateCategory($id, $name) {
     $id = (int)$id;

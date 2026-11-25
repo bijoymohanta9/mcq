@@ -3,9 +3,11 @@
     Session::checkAdminSession();
     include_once ("../lib/Database.php");
     include_once ("../helpers/Format.php");
+    include_once ("../helpers/AuditLog.php");
     
-    $db  = new Database();
-    $fm  = new Format();
+    $db    = new Database();
+    $fm    = new Format();
+    $audit = new AuditLog($db);
 
     header("Cache-Control: no-store, no-cache, must-revalidate"); 
     header("Cache-Control: pre-check=0, post-check=0, max-age=0"); 
@@ -14,6 +16,15 @@
     header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 
     if (isset($_GET['action']) && $_GET['action'] == 'logout') {
+        $logoutUser = (string)($_SESSION['adminUser'] ?? Session::get('adminUser') ?? 'admin');
+        $logoutRole = (string)($_SESSION['adminRole'] ?? Session::get('adminRole') ?? $logoutUser);
+        $logoutId   = (int)($_SESSION['adminId'] ?? Session::get('adminId') ?? 0);
+        $audit->log('logout', "ইউজার ({$logoutUser}) প্যানেল থেকে লগআউট করেছেন।", array(
+            'adminId'   => $logoutId,
+            'adminUser' => $logoutUser,
+            'adminRole' => $logoutRole,
+            'page_name' => basename($_SERVER['PHP_SELF'] ?? 'header.php')
+        ));
         Session::destroy();
         header("Location:login.php");
         exit();
@@ -32,9 +43,58 @@
         Session::set('adminRole', $adminRole);
     }
 
+    // Fetch logged-in admin / co-admin profile info from tbl_admin
+    $adminDisplayName = ucfirst($adminRole);
+    $adminPicPath     = '';
+    $sessionAdminId   = (int)($_SESSION['adminId'] ?? Session::get('adminId') ?? 0);
+    $sessionAdminUser = trim((string)($_SESSION['adminUser'] ?? Session::get('adminUser') ?? ''));
+
+    $adminRow = false;
+    if ($sessionAdminId > 0) {
+        $adminRes = $db->select("SELECT * FROM tbl_admin WHERE adminId = '$sessionAdminId' LIMIT 1");
+        if ($adminRes && $adminRes->num_rows > 0) {
+            $adminRow = $adminRes->fetch_assoc();
+        }
+    }
+    if (!$adminRow && $sessionAdminUser !== '') {
+        $safeAdminUser = mysqli_real_escape_string($db->link, $sessionAdminUser);
+        $adminRes = $db->select("SELECT * FROM tbl_admin WHERE adminUser = '$safeAdminUser' LIMIT 1");
+        if ($adminRes && $adminRes->num_rows > 0) {
+            $adminRow = $adminRes->fetch_assoc();
+        }
+    }
+    if (!$adminRow) {
+        $safeRoleUser = mysqli_real_escape_string($db->link, $adminRole);
+        $adminRes = $db->select("SELECT * FROM tbl_admin WHERE adminUser = '$safeRoleUser' LIMIT 1");
+        if ($adminRes && $adminRes->num_rows > 0) {
+            $adminRow = $adminRes->fetch_assoc();
+        }
+    }
+
+    if (is_array($adminRow)) {
+        if (!empty($adminRow['adminId'])) {
+            $sessionAdminId = (int)$adminRow['adminId'];
+            $_SESSION['adminId'] = $sessionAdminId;
+        }
+        if (!empty($adminRow['name']) && trim((string)$adminRow['name']) !== '0') {
+            $adminDisplayName = trim((string)$adminRow['name']);
+        } elseif (!empty($adminRow['adminUser'])) {
+            $adminDisplayName = trim((string)$adminRow['adminUser']);
+        }
+
+        $rawPic = trim((string)($adminRow['pic'] ?? ''));
+        if ($rawPic !== '' && $rawPic !== '0') {
+            $picName = basename(str_replace('\\', '/', $rawPic));
+            if ($picName !== '') {
+                $adminPicPath = '../uploads/admins/' . rawurlencode($picName);
+            }
+        }
+    }
+
     // Dropdown Active State Helpers
     $isQuestionActive = in_array($currentPage, ['quesadd.php', 'queslist.php', 'add_category_subject.php']);
-    $isCircularActive = in_array($currentPage, ['circular_add.php', 'circular_list.php']);
+    $isCircularActive = in_array($currentPage, ['circular_add.php', 'circular_list.php', 'circular_archive.php']);
+    $isAccountActive  = in_array($currentPage, ['admin_profile.php', 'change_password.php', 'audit_log.php']);
 ?>
 <!doctype html>
 <html lang="bn">
@@ -118,6 +178,9 @@
                             <a href="circular_list.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'circular_list.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
                                 <i class="fa-solid fa-briefcase text-sky-400"></i> Circular List
                             </a>
+                            <a href="circular_archive.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'circular_archive.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-box-archive text-amber-400"></i> Archive
+                            </a>
                         </div>
                     </div>
 
@@ -136,10 +199,38 @@
                         <?php echo htmlspecialchars($adminRole, ENT_QUOTES, 'UTF-8'); ?>
                     </span>
 
-                    <!-- Logout -->
-                    <a href="?action=logout" class="ml-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-600 transition flex items-center gap-1.5 border border-rose-500/20 hover:border-transparent">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
-                    </a>
+                    <!-- Admin / Co-Admin Name Dropdown Menu -->
+                    <div class="relative group ml-1">
+                        <button type="button" class="px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 <?php echo $isAccountActive ? 'text-white bg-slate-800' : 'text-slate-200 hover:text-white hover:bg-slate-800/80'; ?>">
+                            <?php if ($adminPicPath !== ''): ?>
+                                <img src="<?php echo htmlspecialchars($adminPicPath, ENT_QUOTES, 'UTF-8'); ?>" alt="Profile Picture" class="w-6 h-6 rounded-full object-cover border border-indigo-400/40" onerror="this.style.display='none'; if(this.nextElementSibling){this.nextElementSibling.style.display='inline-flex';}">
+                                <span style="display:none;" class="w-6 h-6 rounded-full bg-indigo-600/20 border border-indigo-400/30 text-indigo-300 text-[11px] items-center justify-center">
+                                    <i class="fa-solid fa-user-shield"></i>
+                                </span>
+                            <?php else: ?>
+                                <span class="w-6 h-6 rounded-full bg-indigo-600/20 border border-indigo-400/30 text-indigo-300 text-[11px] inline-flex items-center justify-center">
+                                    <i class="fa-solid fa-user-shield"></i>
+                                </span>
+                            <?php endif; ?>
+                            <span><?php echo htmlspecialchars($adminDisplayName, ENT_QUOTES, 'UTF-8'); ?></span>
+                            <i class="fa-solid fa-chevron-down text-[10px] opacity-70 group-hover:rotate-180 transition-transform"></i>
+                        </button>
+                        <div class="absolute right-0 mt-1 w-52 bg-slate-800 border border-slate-700/80 rounded-xl shadow-xl py-2 hidden group-hover:block transition z-50">
+                            <a href="admin_profile.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'admin_profile.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-user-pen text-indigo-400"></i> Update Profile
+                            </a>
+                            <a href="change_password.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'change_password.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-key text-amber-400"></i> Change Password
+                            </a>
+                            <a href="audit_log.php" class="block px-4 py-2 text-xs font-medium <?php echo ($currentPage == 'audit_log.php') ? 'text-indigo-400 bg-slate-700/50' : 'text-slate-300 hover:bg-slate-700 hover:text-white'; ?> transition flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i> Audit Log
+                            </a>
+                            <div class="border-t border-slate-700/60 my-1"></div>
+                            <a href="?action=logout" class="block px-4 py-2 text-xs font-medium text-rose-400 hover:bg-rose-600 hover:text-white transition flex items-center gap-2">
+                                <i class="fa-solid fa-right-from-bracket"></i> Logout
+                            </a>
+                        </div>
+                    </div>
                 </nav>
 
                 <!-- Mobile Menu Button -->
@@ -152,9 +243,22 @@
 
         <!-- Mobile Drawer Menu -->
         <div id="adminMobileMenu" class="hidden lg:hidden border-t border-slate-800 bg-slate-900 px-4 pt-3 pb-4 space-y-1">
-            <div class="px-3 py-1">
+            <div class="px-3 py-1.5 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
+                    <?php if ($adminPicPath !== ''): ?>
+                        <img src="<?php echo htmlspecialchars($adminPicPath, ENT_QUOTES, 'UTF-8'); ?>" alt="Profile Picture" class="w-6 h-6 rounded-full object-cover border border-indigo-400/40" onerror="this.style.display='none'; if(this.nextElementSibling){this.nextElementSibling.style.display='inline-flex';}">
+                        <span style="display:none;" class="w-6 h-6 rounded-full bg-indigo-600/20 border border-indigo-400/30 text-indigo-300 text-[11px] items-center justify-center">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </span>
+                    <?php else: ?>
+                        <span class="w-6 h-6 rounded-full bg-indigo-600/20 border border-indigo-400/30 text-indigo-300 text-[11px] inline-flex items-center justify-center">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </span>
+                    <?php endif; ?>
+                    <span><?php echo htmlspecialchars($adminDisplayName, ENT_QUOTES, 'UTF-8'); ?></span>
+                </span>
                 <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider <?php echo ($adminRole === 'co-admin') ? 'bg-amber-500/15 text-amber-300 border border-amber-400/30' : 'bg-indigo-500/15 text-indigo-300 border border-indigo-400/30'; ?>">
-                    Role: <?php echo htmlspecialchars($adminRole, ENT_QUOTES, 'UTF-8'); ?>
+                    <?php echo htmlspecialchars($adminRole, ENT_QUOTES, 'UTF-8'); ?>
                 </span>
             </div>
             <a href="index.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
@@ -182,6 +286,9 @@
             <a href="circular_list.php" class="block px-3 py-2 text-xs font-semibold text-indigo-300 hover:bg-slate-800 rounded-lg pl-6">
                 <i class="fa-solid fa-briefcase w-5"></i> Circular List
             </a>
+            <a href="circular_archive.php" class="block px-3 py-2 text-xs font-semibold text-amber-300 hover:bg-slate-800 rounded-lg pl-6">
+                <i class="fa-solid fa-box-archive w-5"></i> Archive
+            </a>
 
             <div class="pt-2"></div>
             <a href="subscriptions.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
@@ -190,7 +297,18 @@
             <a href="leaderboard.php" class="block px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800 rounded-lg">
                 <i class="fa-solid fa-trophy text-amber-400 w-5"></i> Leaderboard
             </a>
-            <a href="?action=logout" class="block px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-900/40 rounded-lg mt-2">
+
+            <div class="pt-2 pb-1 text-[11px] font-bold text-slate-500 tracking-wider uppercase px-3">Account</div>
+            <a href="admin_profile.php" class="block px-3 py-2 text-xs font-semibold text-indigo-300 hover:bg-slate-800 rounded-lg pl-6">
+                <i class="fa-solid fa-user-pen w-5"></i> Update Profile
+            </a>
+            <a href="change_password.php" class="block px-3 py-2 text-xs font-semibold text-amber-300 hover:bg-slate-800 rounded-lg pl-6">
+                <i class="fa-solid fa-key w-5"></i> Change Password
+            </a>
+            <a href="audit_log.php" class="block px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-slate-800 rounded-lg pl-6">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i> Audit Log
+            </a>
+            <a href="?action=logout" class="block px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-900/40 rounded-lg mt-1">
                 <i class="fa-solid fa-right-from-bracket w-5"></i> Logout
             </a>
         </div>

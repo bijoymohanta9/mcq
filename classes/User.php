@@ -1,5 +1,5 @@
 <?php 
- $filepath = realpath(dirname(__FILE__));
+$filepath = realpath(dirname(__FILE__));
 include_once ($filepath.'/../lib/Session.php');
 include_once ($filepath.'/../lib/Database.php');
 include_once ($filepath.'/../helpers/Format.php');
@@ -53,41 +53,6 @@ class User{
     }
 
 	}
-
-  // public function userLogin($email,$password){
-  //   $email = $this->fm->validation($email);
-  //   $password = $this->fm->validation($password);
-  //   $email = mysqli_real_escape_string($this->db->link, $email);
-   
-
-  //   if ($email == "" || $password == "") {
-  //     echo "empty";
-  //     exit();
-  //   }else{
-  //     $password = mysqli_real_escape_string($this->db->link,md5($password));
-  //     $query = "SELECT * FROM tbl_user WHERE email='$email' AND password='$password'";
-  //     $result = $this->db->select($query);
-  //     if ($result != false) {
-  //      $value = $result->fetch_assoc();
-  //      if ($value['status'] == '1') {
-  //        echo "disable";
-  //        exit();
-  //      }else{
-
-  //           Session::init();
-  //           Session::set("login", true);
-  //           Session::set("userid", $value['userid']);
-  //           Session::set("username", $value['username']);
-  //           Session::set("name", $value['name']);
-            
-  //      }
-  //     }else{
-  //       echo "error";
-  //        exit();
-  //     }
-  //   }
-    
-  // }
 
   public function getUserData($userid){
       $query = "SELECT * FROM tbl_user ORDER BY userid DESC";
