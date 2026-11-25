@@ -9,6 +9,12 @@
         header("Location: exam.php");
         exit();
     }
+
+    // সার্কুলার ফেচ করার জন্য Exam ক্লাস যুক্ত করা হলো
+    include_once ($filepath . '/classes/Exam.php');
+    $exm = new Exam();
+    $homeCirculars = $exm->getActiveCirculars(null);
+    $whatsapp_no = "8801954819285";
 ?>
 
 <!doctype html>
@@ -17,11 +23,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Online Exam System – Job Prep & Assessment</title>
-<meta name="description" content="বিসিএস, শিক্ষক নিবন্ধন, প্রাথমিক সহকারী শিক্ষক, ব্যাংক জবস ও সাব অ্যাসিস্ট্যান্ট ইঞ্জিনিয়ার পরীক্ষার মডেল টেস্ট।">
+<meta name="description" content="বিসিএস, শিক্ষক নিবন্ধন, প্রাথমিক সহকারী শিক্ষক, ব্যাংক জবস ও সাব অ্যাসিস্ট্যান্ট ইঞ্জিনিয়ার পরীক্ষার মডেল টেস্ট এবং A-Z আবেদন সহায়তা।">
 
-<!-- Tailwind CSS CDN (same as your existing pages) -->
+<!-- Tailwind CSS CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Google Font (same as your existing pages) -->
+<!-- Google Font -->
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
   tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Hind Siliguri"', 'system-ui', 'sans-serif'] } } } };
@@ -41,7 +47,7 @@
   .ic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;}
   .dots{background-image:radial-gradient(#fff 1px,transparent 1px);background-size:16px 16px;}
 
-  /* ---------- page loader (like Udvash's loading mask) ---------- */
+  /* ---------- page loader ---------- */
   #loader{position:fixed;inset:0;z-index:200;background:#fff;display:flex;align-items:center;justify-content:center;animation:loaderOut .5s ease .9s forwards;}
   #loader .ring{width:46px;height:46px;border-radius:9999px;border:4px solid #e0e7ff;border-top-color:#4f46e5;animation:spin .8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -57,11 +63,13 @@
   @keyframes navpulse{0%,100%{color:#4338ca;text-shadow:0 0 0 rgba(79,70,229,0)}50%{color:#d97706;text-shadow:0 0 10px rgba(245,158,11,.55)}}
   .join-btn{animation:ring 2.2s infinite;}
   @keyframes ring{0%{box-shadow:0 0 0 0 rgba(79,70,229,.5)}70%{box-shadow:0 0 0 12px rgba(79,70,229,0)}100%{box-shadow:0 0 0 0 rgba(79,70,229,0)}}
+  .wa-pulse{animation:waring 2.2s infinite;}
+  @keyframes waring{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 12px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
   .shine{position:relative;overflow:hidden;}
   .shine::after{content:'';position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);transition:left .7s;}
   .shine:hover::after{left:130%;}
 
-  /* hamburger (Udvash style: three lines -> X) */
+  /* hamburger */
   .burger span{display:block;height:2px;width:22px;background:#334155;border-radius:2px;transition:transform .35s,opacity .25s;}
   .burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
   .burger.open span:nth-child(2){opacity:0;}
@@ -115,7 +123,7 @@
   .tile:hover .tile-ic{transform:translateY(-4px) rotate(-6deg);}
   .tile-ic{transition:transform .35s;}
 
-  /* ---------- bars & rings in feature blocks ---------- */
+  /* ---------- bars & rings ---------- */
   .bar{width:0;transition:width 1.4s cubic-bezier(.2,.7,.2,1) .3s;}
   .in .bar{width:var(--w);}
   .ringp{stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 1.8s ease .4s;}
@@ -127,8 +135,8 @@
   .stepline{transform:scaleX(0);transform-origin:left;transition:transform 1.4s ease .3s;}
   .in .stepline{transform:scaleX(1);}
 
-  /* ---------- modal ---------- */
-  #loginModal.show{display:flex;}
+  /* ---------- modals ---------- */
+  #loginModal.show, #applyHelpModal.show{display:flex;}
   .modal-card{animation:pop .35s cubic-bezier(.2,.8,.2,1);}
   @keyframes pop{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:none}}
 
@@ -148,16 +156,16 @@
 
 <body>
 
-<!-- ============ SVG icon set (inline, no external icon font needed) ============ -->
+<!-- ============ SVG icon set ============ -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-cap" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/><path d="M22 10v6"/></symbol>
   <symbol id="i-brief" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
-  <symbol id="i-gem" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></symbol>
-  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55-.47.98-.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
   <symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
   <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
@@ -170,19 +178,18 @@
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
   <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.3 2.5a1 1 0 0 1-.9 1.5H3.6a1 1 0 0 1-.9-1.5L4 16"/></symbol>
   <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></symbol>
-  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
-  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
-  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
 </svg>
 
 <div id="loader"><div class="ring"></div></div>
 
 <!-- ============================================================
-     HEADER  (your header style + Udvash-style "Join Now" pill)
+     HEADER
      ============================================================ -->
 <header id="header" class="bg-white/95 backdrop-blur border-b border-slate-200 sticky z-50 transition-shadow" style="top:env(safe-area-inset-top,0px)">
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
@@ -199,10 +206,10 @@
 
     <!-- Desktop menu -->
     <nav class="hidden lg:flex items-center gap-1">
-      <a href="#courses" class="navlink px-3 py-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition">পরীক্ষাসমূহ</a>
-      <a href="circulars.php" class="navlink pulse-link px-3 py-2 text-sm font-bold flex items-center gap-1.5">
-        <svg class="ic w-4 h-4"><use href="#i-brief"/></svg> সরকারি সার্কুলার
+      <a href="#live-circulars" class="navlink pulse-link px-3 py-2 text-sm font-bold flex items-center gap-1.5">
+        <svg class="ic w-4 h-4"><use href="#i-brief"/></svg> সরকারি সার্কুলার ও আবেদন
       </a>
+      <a href="#courses" class="navlink px-3 py-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition">পরীক্ষাসমূহ</a>
       <a href="#plans" class="navlink px-3 py-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition">সাবস্ক্রিপশন প্ল্যান</a>
       <a href="#services" class="navlink px-3 py-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition">সেবাসমূহ</a>
       <a href="leaderboard.php" class="navlink px-3 py-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition flex items-center gap-1.5">
@@ -227,8 +234,8 @@
   <!-- Mobile menu -->
   <div id="mnav" class="lg:hidden bg-white border-t border-slate-100">
     <div class="px-4 py-3 flex flex-col">
+      <a href="#live-circulars" class="py-2.5 text-sm font-bold text-indigo-600 border-b border-slate-100 flex items-center gap-2"><svg class="ic w-4 h-4"><use href="#i-brief"/></svg> সরকারি সার্কুলার ও A-Z আবেদন</a>
       <a href="#courses" class="py-2.5 text-sm font-semibold text-slate-700 border-b border-slate-100">পরীক্ষাসমূহ</a>
-      <a href="circulars.php" class="py-2.5 text-sm font-bold text-indigo-600 border-b border-slate-100 flex items-center gap-2"><svg class="ic w-4 h-4"><use href="#i-brief"/></svg> সরকারি সার্কুলার</a>
       <a href="#plans" class="py-2.5 text-sm font-semibold text-slate-700 border-b border-slate-100">সাবস্ক্রিপশন প্ল্যান</a>
       <a href="#services" class="py-2.5 text-sm font-semibold text-slate-700 border-b border-slate-100">সেবাসমূহ</a>
       <a href="leaderboard.php" class="py-2.5 text-sm font-semibold text-slate-700 border-b border-slate-100 flex items-center gap-2"><svg class="ic w-4 h-4 text-amber-500"><use href="#i-trophy"/></svg> Leaderboard</a>
@@ -244,7 +251,7 @@
 <main>
 
 <!-- ============================================================
-     HERO CAROUSEL  (Udvash-style sliding banner)
+     HERO CAROUSEL
      ============================================================ -->
 <section id="hero" class="relative overflow-hidden">
   <div id="slides" class="slides"></div>
@@ -264,7 +271,178 @@
 </div>
 
 <!-- ============================================================
-     COURSES  (Udvash "programs" section: filters + cards)
+     NEW: LIVE CIRCULARS & HIGHLIGHTED A-TO-Z APPLICATION SERVICE
+     ============================================================ -->
+<section id="live-circulars" class="py-14 sm:py-20 bg-white border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 space-y-10">
+
+    <!-- Section Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 reveal">
+      <div>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full mb-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> লাইভ নিয়োগ বিজ্ঞপ্তি ও আবেদন সেবা
+        </span>
+        <h2 class="text-2xl sm:text-4xl font-bold text-slate-900 tracking-tight">চলমান জব সার্কুলার ও A-Z আবেদন সাপোর্ট</h2>
+        <p class="text-slate-600 text-sm mt-1.5 max-w-2xl">নিজে আবেদন করতে না পারলে নিশ্চিন্ত থাকুন—বন্ধুর মতো পাশে থেকে নির্ভুলভাবে আমরা আপনার সম্পূর্ণ আবেদন সম্পন্ন করে দেব।</p>
+      </div>
+      <a href="circulars.php" class="shine inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-sm border border-indigo-200 transition self-start md:self-auto">
+        <span>সকল সার্কুলার দেখুন</span>
+        <svg class="ic w-4 h-4"><use href="#i-arrow"/></svg>
+      </a>
+    </div>
+
+    <!-- Highlighted A-to-Z Application Service Banner -->
+    <div class="reveal relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 text-white p-6 sm:p-8 lg:p-10 shadow-xl border border-emerald-700/40">
+      <div class="absolute inset-0 dots opacity-10"></div>
+      <div class="blob w-52 h-52 bg-emerald-400/15 -top-16 -right-12"></div>
+
+      <div class="relative grid lg:grid-cols-12 gap-8 items-center">
+        <!-- Left Info -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 px-3.5 py-1 rounded-full text-xs font-bold">
+            <svg class="ic w-4 h-4 text-emerald-400"><use href="#i-wa"/></svg> স্পেশাল সার্ভিস: A-Z অনলাইন আবেদন সহায়তা
+          </div>
+          <h3 class="text-2xl sm:text-3xl font-bold leading-snug">ফর্ম পূরণে ভুল হওয়ার ভয়? আমরাই করে দিচ্ছি আপনার A-to-Z আবেদন!</h3>
+          <p class="text-emerald-100/90 text-sm leading-relaxed">
+            ছবি ও স্বাক্ষর রিসাইজ, সঠিক কোটা ও তথ্য পূরণ থেকে শুরু করে পেমেন্ট এবং ফাইনাল <b>Applicant Copy</b> সংগ্রহ—সব দায়িত্ব আমাদের। আগে <b>Draft Copy</b> দেখে নিশ্চিত হয়ে তারপর পেমেন্ট করুন।
+          </p>
+
+          <!-- 3 Mini Steps -->
+          <div class="grid sm:grid-cols-3 gap-3 pt-2">
+            <div class="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-3">
+              <span class="text-xs font-bold text-amber-300 block">ধাপ ১: তথ্য প্রেরণ</span>
+              <p class="text-xs text-slate-200 mt-1">WhatsApp-এ ছবি, স্বাক্ষর ও শিক্ষাগত তথ্য পাঠান।</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-3">
+              <span class="text-xs font-bold text-amber-300 block">ধাপ ২: Draft যাচাই</span>
+              <p class="text-xs text-slate-200 mt-1">ফাইনাল সাবমিটের আগে ফর্মের প্রিভিউ দেখে নিশ্চিত হোন।</p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl p-3">
+              <span class="text-xs font-bold text-amber-300 block">ধাপ ৩: পেমেন্ট ও কপি</span>
+              <p class="text-xs text-slate-200 mt-1">bKash/Nagad-এ ফি পাঠালেই পাবেন চূড়ান্ত কপি।</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right CTA Box -->
+        <div class="lg:col-span-5">
+          <div class="bg-white text-slate-800 rounded-2xl p-6 shadow-2xl border border-emerald-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">সরাসরি হেল্পডেস্ক</span>
+                <h4 class="text-lg font-bold text-slate-900">WhatsApp আবেদন সাপোর্ট</h4>
+              </div>
+              <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <svg class="ic w-6 h-6"><use href="#i-wa"/></svg>
+              </div>
+            </div>
+
+            <ul class="space-y-2 text-xs text-slate-600">
+              <li class="flex items-center gap-2"><svg class="ic w-4 h-4 text-emerald-600"><use href="#i-checkc"/></svg> ১০০% নির্ভুল তথ্য এন্ট্রি ও ফটো রিসাইজ</li>
+              <li class="flex items-center gap-2"><svg class="ic w-4 h-4 text-emerald-600"><use href="#i-checkc"/></svg> পেমেন্টের পূর্বে Draft Copy চেক করার সুবিধা</li>
+              <li class="flex items-center gap-2"><svg class="ic w-4 h-4 text-emerald-600"><use href="#i-checkc"/></svg> সহজ পেমেন্ট: <b>bKash / Nagad</b> (সরকারি ফি + সামান্য চার্জ)</li>
+            </ul>
+
+            <a href="https://wa.me/<?php echo $whatsapp_no; ?>?text=<?php echo urlencode('আসসালামু আলাইকুম, আমি সরকারি চাকরির অনলাইন আবেদনের জন্য আপনাদের A-Z সাপোর্ট নিতে চাই।'); ?>" 
+               target="_blank" rel="noopener noreferrer"
+               class="wa-pulse shine w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition">
+              <svg class="ic w-5 h-5"><use href="#i-wa"/></svg>
+              <span>WhatsApp-এ কথা বলুন (+880 1954-819285)</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Latest 3 Circulars Grid from Database -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 reveal" style="--d:120ms">
+      <?php 
+        if ($homeCirculars && $homeCirculars->num_rows > 0) {
+            $count = 0;
+            while ($row = $homeCirculars->fetch_assoc()) {
+                if ($count >= 3) break; // হোমপেজে সর্বোচ্চ ৩টি লেটেস্ট সার্কুলার দেখাবে
+                $count++;
+                $formatted_deadline = date("d M, Y", strtotime($row['deadline']));
+                $safe_title = htmlspecialchars($row['title'], ENT_QUOTES, 'UTF-8');
+      ?>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between space-y-4">
+            <div class="space-y-3">
+                <!-- Category & Deadline -->
+                <div class="flex items-center justify-between gap-2">
+                    <span class="px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg">
+                        <?php echo $row['category_name']; ?>
+                    </span>
+                    <span class="text-[11px] font-semibold text-rose-600 flex items-center gap-1 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">
+                        <svg class="ic w-3.5 h-3.5"><use href="#i-clock"/></svg> শেষ: <?php echo $formatted_deadline; ?>
+                    </span>
+                </div>
+
+                <!-- Title & Organization -->
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 line-clamp-2 hover:text-indigo-600 transition">
+                        <?php echo $row['title']; ?>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1 font-medium flex items-center gap-1.5">
+                        <svg class="ic w-3.5 h-3.5 text-slate-400"><use href="#i-building"/></svg>
+                        <span><?php echo $row['organization']; ?></span>
+                    </p>
+                </div>
+
+                <!-- Details Box -->
+                <div class="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between text-xs">
+                    <div>
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase">মোট পদসংখ্যা</span>
+                        <span class="font-bold text-slate-700"><?php echo !empty($row['vacancy']) ? $row['vacancy'] : 'বিজ্ঞপ্তি দেখুন'; ?></span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase">আবেদনের মাধ্যম</span>
+                        <span class="font-bold text-slate-700">অনলাইন পোর্টালে</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-3 border-t border-slate-100 space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                    <?php if (!empty($row['pdf_url'])): ?>
+                        <a href="<?php echo $row['pdf_url']; ?>" target="_blank" rel="noopener noreferrer" class="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition flex items-center gap-1.5">
+                            <svg class="ic w-3.5 h-3.5 text-rose-500"><use href="#i-file"/></svg>
+                            <span>PDF নোটিশ</span>
+                        </a>
+                    <?php else: ?>
+                        <span></span>
+                    <?php endif; ?>
+
+                    <a href="<?php echo $row['apply_url']; ?>" target="_blank" rel="noopener noreferrer" class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5">
+                        <span>আবেদন করুন</span>
+                        <svg class="ic w-3.5 h-3.5"><use href="#i-ext"/></svg>
+                    </a>
+                </div>
+
+                <!-- Smart & Professional A-to-Z Application Support Button -->
+                <button type="button" 
+                        onclick="openApplyHelpModal('<?php echo $safe_title; ?>')"
+                        class="w-full py-2.5 px-3 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer">
+                    <svg class="ic w-4 h-4 text-emerald-600"><use href="#i-wa"/></svg>
+                    <span>আবেদন সহায়তা নিন (A-Z সাপোর্ট)</span>
+                </button>
+            </div>
+        </div>
+      <?php 
+            }
+        } else {
+      ?>
+        <div class="col-span-full bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center">
+            <p class="text-sm font-bold text-slate-700">বর্তমানে কোনো নতুন সার্কুলার নেই, তবে যেকোনো চলমান নিয়োগে আবেদনের জন্য আমাদের WhatsApp-এ নক করতে পারেন।</p>
+        </div>
+      <?php } ?>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     COURSES
      ============================================================ -->
 <section id="courses" class="py-14 sm:py-20">
   <div class="max-w-7xl mx-auto px-4">
@@ -317,7 +495,7 @@
 </section>
 
 <!-- ============================================================
-     SERVICES  (Udvash "সেবা পরিক্রমা" icon grid)
+     SERVICES
      ============================================================ -->
 <section id="services" class="py-14 sm:py-20">
   <div class="max-w-7xl mx-auto px-4">
@@ -330,7 +508,7 @@
 </section>
 
 <!-- ============================================================
-     FEATURE BLOCK 1  (Udvash "সকল শাখায় সমান সেবা" style)
+     FEATURE BLOCK 1
      ============================================================ -->
 <section class="pb-14 sm:pb-20">
   <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
@@ -376,7 +554,7 @@
 </section>
 
 <!-- ============================================================
-     FEATURE BLOCK 2  (Udvash "থেমে থাকবে না প্রস্তুতি" style)
+     FEATURE BLOCK 2
      ============================================================ -->
 <section class="pb-14 sm:pb-20">
   <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
@@ -407,7 +585,7 @@
 </section>
 
 <!-- ============================================================
-     PLANS  (your 3 duration options, same prices)
+     PLANS
      ============================================================ -->
 <section id="plans" class="py-14 sm:py-20 bg-white border-y border-slate-200">
   <div class="max-w-5xl mx-auto px-4">
@@ -451,7 +629,7 @@
 </section>
 
 <!-- ============================================================
-     STEPS  (a real sequence, so numbering is used here)
+     STEPS
      ============================================================ -->
 <section class="py-14 sm:py-20">
   <div class="max-w-6xl mx-auto px-4">
@@ -493,7 +671,7 @@
 </main>
 
 <!-- ============================================================
-     FOOTER  (Udvash-style columns)
+     FOOTER
      ============================================================ -->
 <footer class="bg-slate-900 text-slate-300">
   <div class="max-w-7xl mx-auto px-4 py-12 grid md:grid-cols-4 gap-10">
@@ -502,23 +680,23 @@
         <div class="bg-indigo-600 text-white p-2.5 rounded-xl"><svg class="ic w-5 h-5"><use href="#i-cap"/></svg></div>
         <div><p class="font-bold text-white leading-none">Online Exam System</p><span class="text-xs text-slate-400">Job Prep &amp; Assessment</span></div>
       </div>
-      <p class="text-sm text-slate-400 mt-4 max-w-sm leading-relaxed">বিসিএস, শিক্ষক নিবন্ধন, প্রাথমিক সহকারী শিক্ষক, ব্যাংক জবস ও সাব অ্যাসিস্ট্যান্ট ইঞ্জিনিয়ার — সব পরীক্ষার মডেল টেস্ট এক জায়গায়।</p>
+      <p class="text-sm text-slate-400 mt-4 max-w-sm leading-relaxed">বিসিএস, শিক্ষক নিবন্ধন, প্রাথমিক সহকারী শিক্ষক, ব্যাংক জবস ও সাব অ্যাসিস্ট্যান্ট ইঞ্জিনিয়ার — সব পরীক্ষার মডেল টেস্ট ও A-Z আবেদন সহায়তা এক জায়গায়।</p>
     </div>
     <div>
       <h4 class="text-white font-bold mb-3">Explore</h4>
       <ul class="space-y-2 text-sm">
-        <li><a href="exam.php" class="hover:text-white transition">Take Exam</a></li>
         <li><a href="circulars.php" class="hover:text-white transition">সরকারি সার্কুলার</a></li>
+        <li><a href="exam.php" class="hover:text-white transition">Take Exam</a></li>
         <li><a href="leaderboard.php" class="hover:text-white transition">Leaderboard</a></li>
         <li><a href="subscription.php" class="hover:text-white transition">Buy Plan</a></li>
       </ul>
     </div>
     <div>
-      <h4 class="text-white font-bold mb-3">Account</h4>
+      <h4 class="text-white font-bold mb-3">Support &amp; Account</h4>
       <ul class="space-y-2 text-sm">
+        <li><a href="https://wa.me/<?php echo $whatsapp_no; ?>" target="_blank" class="text-emerald-400 hover:text-emerald-300 transition flex items-center gap-1.5"><svg class="ic w-4 h-4"><use href="#i-wa"/></svg> A-Z আবেদন সাপোর্ট</a></li>
         <li><button type="button" data-open-login class="hover:text-white transition">Login</button></li>
         <li><a href="register.php" class="hover:text-white transition">Register</a></li>
-        <li><a href="profile.php" class="hover:text-white transition">Profile</a></li>
         <li><a href="exam_history.php" class="hover:text-white transition">Exam Records</a></li>
       </ul>
     </div>
@@ -526,7 +704,7 @@
   <div class="border-t border-slate-800">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-slate-500">
       <p>&copy; 2026 Online Exam System. All rights reserved.</p>
-      <p class="font-medium text-slate-400">Developed by VFC Tecnologies</p>
+      <p class="font-medium text-slate-400">Developed by VFC Technologies</p>
     </div>
   </div>
 </footer>
@@ -538,8 +716,60 @@
 <div id="toast" class="bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl max-w-[90vw] text-center"></div>
 
 <!-- ============================================================
-     LOGIN MODAL  (same fields, ids and message boxes as your login page,
-     so your existing js/main.js keeps working)
+     WHATSAPP A-TO-Z SUPPORT & PAYMENT MODAL
+     ============================================================ -->
+<div id="applyHelpModal" class="fixed inset-0 z-[110] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" role="dialog" aria-modal="true">
+  <div class="modal-card bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 relative">
+    
+    <button type="button" onclick="closeApplyHelpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+      <svg class="ic w-4 h-4"><use href="#i-x"/></svg>
+    </button>
+
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+        <svg class="ic w-6 h-6"><use href="#i-wa"/></svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-800">A-to-Z আবেদন সহায়তা</h3>
+        <p class="text-xs text-slate-500">কোনো ঝামেলা ছাড়াই নির্ভুলভাবে আবেদন করুন</p>
+      </div>
+    </div>
+
+    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+      <span class="text-[10px] font-bold text-slate-400 uppercase block">নির্বাচিত সার্কুলার:</span>
+      <p id="modalCircularTitle" class="text-xs font-bold text-indigo-700 mt-0.5"></p>
+    </div>
+
+    <div class="space-y-2.5 text-xs text-slate-600">
+      <p class="font-bold text-slate-800">কীভাবে আবেদন ও পেমেন্ট করবেন?</p>
+      <ul class="space-y-2">
+        <li class="flex items-start gap-2">
+          <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">১</span>
+          <span>নিচের বাটনে ক্লিক করে WhatsApp-এ আপনার <b>ছবি, স্বাক্ষর ও শিক্ষাগত তথ্য</b> পাঠান।</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">২</span>
+          <span>আমরা ফর্ম পূরণ করে আপনাকে <b>Draft Copy</b> দেখাবো। সব তথ্য ঠিক থাকলে পেমেন্ট করবেন।</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">৩</span>
+          <span><b>পেমেন্ট পদ্ধতি:</b> সরকারি আবেদন ফি + সামান্য সার্ভিস চার্জ আমাদের <b>bKash / Nagad</b> নম্বরে পাঠাবেন। পেমেন্টের পরপরই ফাইনাল <b>Applicant Copy</b> পেয়ে যাবেন।</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="pt-2">
+      <a id="whatsappDirectLink" href="#" target="_blank" rel="noopener noreferrer" 
+         class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+        <svg class="ic w-4 h-4"><use href="#i-wa"/></svg>
+        <span>WhatsApp-এ মেসেজ পাঠান (+880 1954-819285)</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     LOGIN MODAL
      ============================================================ -->
 <div id="loginModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Login">
   <div class="modal-card relative w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden grid md:grid-cols-2 max-h-[92vh] overflow-y-auto">
@@ -560,7 +790,6 @@
         <p class="text-slate-500 text-sm mt-1">Please enter your credentials to continue</p>
       </div>
 
-      <!-- Shown only when a guest clicks a page that needs login -->
       <div id="loginNotice" class="hidden mb-5 bg-indigo-50 border border-indigo-200 text-indigo-800 px-4 py-3 rounded-lg text-sm leading-relaxed flex gap-2">
         <svg class="ic w-5 h-5 mt-0.5 text-indigo-600"><use href="#i-lock"/></svg>
         <span id="loginNoticeText"></span>
@@ -608,7 +837,31 @@ const toBn = n => String(n).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'
 const icon = (id, cls = 'w-5 h-5') => `<svg class="ic ${cls}"><use href="#i-${id}"/></svg>`;
 
 /* ==========================================================
-   Data  (in your PHP project this comes from the categories table)
+   WhatsApp Modal Logic
+   ========================================================== */
+function openApplyHelpModal(circularTitle) {
+  const whatsappNumber = "<?php echo $whatsapp_no; ?>";
+  $('#modalCircularTitle').innerText = circularTitle;
+  
+  const message = `আসসালামু আলাইকুম, আমি '${circularTitle}' সার্কুলারে আপনাদের মাধ্যমে A-to-Z আবেদন করতে চাই। কী কী তথ্য লাগবে এবং পেমেন্ট প্রসেসটি জানাবেন।`;
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+  
+  $('#whatsappDirectLink').href = whatsappUrl;
+  $('#applyHelpModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeApplyHelpModal() {
+  $('#applyHelpModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+$('#applyHelpModal').addEventListener('click', e => {
+  if (e.target === $('#applyHelpModal')) closeApplyHelpModal();
+});
+
+/* ==========================================================
+   Data
    ========================================================== */
 const CATS = [
   { id: 1, group: 'govt',    tone: 'indigo',  ic: 'book',   title: 'বিসিএস প্রিলিমিনারি',        short: 'বিসিএস প্রিলিমিনারি সিলেবাস অনুযায়ী বিষয়ভিত্তিক ও পূর্ণাঙ্গ প্রশ্নব্যাংক মডেল টেস্ট।' },
@@ -669,12 +922,12 @@ function slideHTML(s, idx) {
         <p class="a mt-4 text-indigo-100 text-base sm:text-lg max-w-lg leading-relaxed" style="--i:2">${s.desc}</p>
         <div class="a mt-8 flex flex-wrap gap-3" style="--i:3">
           <a href="register.php" class="shine join-btn inline-flex items-center gap-2 rounded-full bg-white text-indigo-700 font-bold px-7 py-3 shadow-lg hover:scale-105 transition">Join Now ${icon('arrow', 'w-4 h-4')}</a>
-          <a href="#plans" class="inline-flex items-center gap-2 rounded-full border border-white/40 hover:bg-white/10 font-semibold px-7 py-3 transition">প্ল্যান দেখুন</a>
+          <a href="#live-circulars" class="inline-flex items-center gap-2 rounded-full border border-white/40 hover:bg-white/10 font-semibold px-7 py-3 transition">সার্কুলার ও আবেদন</a>
         </div>
         <div class="a mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-indigo-100" style="--i:4">
           <span class="flex items-center gap-1.5">${icon('checkc', 'w-4 h-4')} বিষয়ভিত্তিক পরীক্ষা</span>
           <span class="flex items-center gap-1.5">${icon('checkc', 'w-4 h-4')} পূর্ণাঙ্গ মডেল টেস্ট</span>
-          <span class="flex items-center gap-1.5">${icon('checkc', 'w-4 h-4')} পেমেন্টের পরেই একটিভ</span>
+          <span class="flex items-center gap-1.5">${icon('checkc', 'w-4 h-4')} A-Z আবেদন সহায়তা</span>
         </div>
       </div>
       <div class="card-in hidden lg:block">
@@ -709,13 +962,11 @@ solveTimer = setTimeout(() => $$('.slide')[0].classList.add('solved'), 2200);
 $('#next').onclick = () => go(cur + 1);
 $('#prev').onclick = () => go(cur - 1);
 dotsEl.addEventListener('click', e => { const b = e.target.closest('.dot'); if (b) go($$('.dot').indexOf(b)); });
-/* autoplay is driven by the dot's fill animation, so hovering pauses both together */
 dotsEl.addEventListener('animationend', e => { if (e.target.matches('.dot.active i')) go(cur + 1); });
 let tx = 0;
 $('#hero').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
 $('#hero').addEventListener('touchend', e => { const d = e.changedTouches[0].clientX - tx; if (Math.abs(d) > 50) go(cur + (d < 0 ? 1 : -1)); }, { passive: true });
 
-/* ticking exam timer in the mock card */
 let secs = 39 * 60 + 59;
 setInterval(() => {
   secs = secs > 0 ? secs - 1 : 39 * 60 + 59;
@@ -726,7 +977,7 @@ setInterval(() => {
 /* ==========================================================
    Ticker
    ========================================================== */
-const tickItems = ['বিসিএস প্রিলিমিনারি', 'শিক্ষক নিবন্ধন (NTRCA)', 'প্রাথমিক সহকারী শিক্ষক', 'ব্যাংক জবস', 'Sub Assistant Engineer', 'সরকারি সার্কুলার'];
+const tickItems = ['বিসিএস প্রিলিমিনারি', 'শিক্ষক নিবন্ধন (NTRCA)', 'প্রাথমিক সহকারী শিক্ষক', 'ব্যাংক জবস', 'Sub Assistant Engineer', 'সরকারি সার্কুলার ও A-Z আবেদন'];
 const tickHTML = tickItems.map(t => `<span class="flex items-center gap-3 px-6 whitespace-nowrap">${icon('star', 'w-3.5 h-3.5 text-amber-400')} ${t}</span>`).join('');
 $('#marquee').innerHTML = tickHTML + tickHTML;
 
@@ -746,20 +997,20 @@ function cardHTML(c, i, dur) {
   if (c.free) {
     return `
     <div class="pop" style="--d:${i * 90}ms"><article class="course-card h-full bg-white rounded-2xl border border-slate-200 shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden flex flex-col">
-      <div class="relative h-36 bg-gradient-to-br from-slate-700 to-slate-900 text-white overflow-hidden flex items-center justify-center">
+      <div class="relative h-36 bg-gradient-to-br from-emerald-700 to-teal-900 text-white overflow-hidden flex items-center justify-center">
         <div class="absolute inset-0 dots opacity-10"></div><div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10"></div>
         <div class="card-icon relative w-16 h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">${icon('brief', 'w-8 h-8')}</div>
-        <span class="absolute top-3 right-3 text-[11px] font-bold bg-emerald-500 rounded-full px-3 py-0.5">সবার জন্য</span>
+        <span class="absolute top-3 right-3 text-[11px] font-bold bg-amber-500 rounded-full px-3 py-0.5">A-Z সাপোর্টসহ</span>
       </div>
       <div class="p-5 flex-1 flex flex-col">
         <h3 class="text-lg font-bold text-slate-900 mb-3">${c.title}</h3>
         <ul class="space-y-2 text-sm text-slate-600 mb-4 flex-1">
-          <li class="flex gap-2">${icon('check', 'w-4 h-4 mt-0.5 text-slate-700')} লগইন ছাড়াই দেখা যায়</li>
-          <li class="flex gap-2">${icon('check', 'w-4 h-4 mt-0.5 text-slate-700')} সরকারি চাকরির সার্কুলার এক জায়গায়</li>
+          <li class="flex gap-2">${icon('check', 'w-4 h-4 mt-0.5 text-emerald-600')} লগইন ছাড়াই সকল সার্কুলার দেখা যায়</li>
+          <li class="flex gap-2">${icon('check', 'w-4 h-4 mt-0.5 text-emerald-600')} WhatsApp-এ A-to-Z আবেদন সহায়তা</li>
         </ul>
-        <div class="border-t border-dashed border-slate-200 pt-3"><span class="text-2xl font-black text-slate-800">ফ্রি</span></div>
+        <div class="border-t border-dashed border-slate-200 pt-3"><span class="text-2xl font-black text-emerald-700">ফ্রি ব্রাউজিং</span></div>
       </div>
-      <div class="px-5 pb-5"><a href="circulars.php" class="shine block text-center rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 transition">সার্কুলার দেখুন</a></div>
+      <div class="px-5 pb-5"><a href="circulars.php" class="shine block text-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 transition">সব সার্কুলার দেখুন</a></div>
     </article></div>`;
   }
   return `
@@ -783,7 +1034,7 @@ function cardHTML(c, i, dur) {
       </div>
     </article></div>`;
 }
-const ALL = [...CATS, { id: 0, group: 'govt', free: true, title: 'সরকারি সার্কুলার' }];
+const ALL = [...CATS, { id: 0, group: 'govt', free: true, title: 'সরকারি সার্কুলার ও আবেদন' }];
 function renderCards() {
   const g = $('#fGroup').value, dur = $('#fDur').value, q = $('#fSearch').value.trim().toLowerCase();
   const list = ALL.filter(c => (g === 'all' || c.group === g) && (!q || c.title.toLowerCase().includes(q)));
@@ -795,17 +1046,17 @@ $('#fSearch').addEventListener('input', renderCards);
 renderCards();
 
 /* ==========================================================
-   Service tiles
+   Service tiles (Updated with A-to-Z Application Support)
    ========================================================== */
 const TILES = [
-  { ic: 'file',   t: 'Take Exam',              s: 'সরাসরি পরীক্ষা শুরু',           href: 'exam.php',         c: 'bg-indigo-100 text-indigo-600' },
-  { ic: 'book',   t: 'বিষয়ভিত্তিক পরীক্ষা',    s: 'একটি বিষয় ধরে অনুশীলন',        href: '#courses', protect: 'বিষয়ভিত্তিক পরীক্ষা দেখতে', c: 'bg-emerald-100 text-emerald-600' },
-  { ic: 'chart',  t: 'পূর্ণাঙ্গ মডেল টেস্ট',    s: 'পুরো সিলেবাসে যাচাই',           href: '#courses', protect: 'পূর্ণাঙ্গ মডেল টেস্ট দেখতে', c: 'bg-amber-100 text-amber-600' },
-  { ic: 'clock',  t: 'Exam Records',           s: 'আগের সব পরীক্ষার ফল',          href: 'exam_history.php', c: 'bg-indigo-100 text-indigo-600' },
-  { ic: 'trophy', t: 'Leaderboard',            s: 'অন্যদের সাথে অবস্থান মিলান',    href: 'leaderboard.php',  c: 'bg-amber-100 text-amber-600' },
-  { ic: 'brief',  t: 'সরকারি সার্কুলার',        s: 'নতুন চাকরির খবর',              href: 'circulars.php',    c: 'bg-emerald-100 text-emerald-600' },
-  { ic: 'zap',    t: 'দ্রুত একটিভেশন',         s: 'পেমেন্টের সাথে সাথে চালু',      href: 'subscription.php', c: 'bg-indigo-100 text-indigo-600' },
-  { ic: 'user',   t: 'নিজের প্রোফাইল',          s: 'তথ্য ও সাবস্ক্রিপশন এক জায়গায়', href: 'profile.php',      c: 'bg-emerald-100 text-emerald-600' },
+  { ic: 'wa',     t: 'A-Z আবেদন সাপোর্ট',       s: 'WhatsApp-এ নির্ভুল আবেদন',      href: '#live-circulars', c: 'bg-emerald-100 text-emerald-600' },
+  { ic: 'brief',  t: 'সরকারি সার্কুলার',        s: 'সকল চলমান নিয়োগ বিজ্ঞপ্তি',       href: 'circulars.php',   c: 'bg-indigo-100 text-indigo-600' },
+  { ic: 'file',   t: 'Take Exam',              s: 'সরাসরি পরীক্ষা শুরু',            href: 'exam.php',        c: 'bg-amber-100 text-amber-600' },
+  { ic: 'book',   t: 'বিষয়ভিত্তিক পরীক্ষা',    s: 'একটি বিষয় ধরে অনুশীলন',         href: '#courses', protect: 'বিষয়ভিত্তিক পরীক্ষা দেখতে', c: 'bg-emerald-100 text-emerald-600' },
+  { ic: 'chart',  t: 'পূর্ণাঙ্গ মডেল টেস্ট',    s: 'পুরো সিলেবাসে যাচাই',            href: '#courses', protect: 'পূর্ণাঙ্গ মডেল টেস্ট দেখতে', c: 'bg-indigo-100 text-indigo-600' },
+  { ic: 'clock',  t: 'Exam Records',           s: 'আগের সব পরীক্ষার ফল',           href: 'exam_history.php', c: 'bg-amber-100 text-amber-600' },
+  { ic: 'trophy', t: 'Leaderboard',            s: 'অন্যদের সাথে অবস্থান মিলান',     href: 'leaderboard.php',  c: 'bg-emerald-100 text-emerald-600' },
+  { ic: 'zap',    t: 'দ্রুত একটিভেশন',         s: 'পেমেন্টের সাথে সাথে চালু',       href: 'subscription.php', c: 'bg-indigo-100 text-indigo-600' },
 ];
 $('#tiles').innerHTML = TILES.map((x, i) => `
   <a href="${x.href}" ${x.protect ? `data-protect="${x.protect}"` : ''} class="tile reveal group block bg-white rounded-2xl border border-slate-200 p-5 text-center shadow-sm hover:shadow-xl hover:-translate-y-1.5 hover:border-indigo-300 transition-all duration-300" style="--d:${(i % 4) * 90}ms">
@@ -856,7 +1107,7 @@ burger.onclick = () => {
 mnav.addEventListener('click', e => { if (e.target.closest('a[href^="#"]')) { burger.classList.remove('open'); mnav.classList.remove('open'); } });
 
 /* ==========================================================
-   Login modal
+   Login modal & AJAX Login
    ========================================================== */
 const modal = $('#loginModal');
 const openLogin = (why, next) => {
@@ -875,73 +1126,51 @@ const closeLogin = () => { modal.classList.remove('show'); document.body.style.o
 document.addEventListener('click', e => { if (e.target.closest('[data-open-login]')) openLogin(); });
 $('#closeLogin').onclick = closeLogin;
 modal.addEventListener('click', e => { if (e.target === modal) closeLogin(); });
-addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
+addEventListener('keydown', e => { 
+  if (e.key === 'Escape') {
+    closeLogin();
+    closeApplyHelpModal();
+  }
+});
 
-/* DEMO ONLY: remove this block in your real site; your js/main.js handles the login form there. */
-
-    /* ==========================================================
-   AJAX Login Implementation
-   ========================================================== */
-addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
-
-/* ==========================================================
-   AJAX Login Implementation
-   ========================================================== */
-/* ==========================================================
-   AJAX Login Implementation (Updated for Modal)
-   ========================================================== */
 const loginForm = $('#loginForm');
-
 if (loginForm) {
   loginForm.addEventListener('submit', function (e) {
     e.preventDefault();
-
-    // আগের অ্যালার্ট মেসেজ হাইড করা
     $$('.empty, .error, .disable', modal).forEach(x => x.style.display = 'none');
 
     const email = $('#email') ? $('#email').value.trim() : '';
     const password = $('#password') ? $('#password').value.trim() : '';
     const redirect = $('#redirect') ? $('#redirect').value : '';
 
-    // ১. ভ্যালিডেশন
     if (!email || !password) {
       if ($('.empty', modal)) $('.empty', modal).style.display = 'flex';
       return;
     }
 
-    // ২. Request Data প্রস্তুত করা
     const formData = new URLSearchParams();
     formData.append('email', email);
     formData.append('password', password);
 
     fetch('getlogin.php', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formData.toString()
     })
     .then(response => response.text())
     .then(data => {
       const res = data.trim();
-      console.log("Login Response:", res);
-
       if (res === "empty") {
         if ($('.empty', modal)) $('.empty', modal).style.display = 'flex';
       } else if (res === "error") {
         if ($('.error', modal)) $('.error', modal).style.display = 'flex';
       } else if (res === "disable") {
         if ($('.disable', modal)) $('.disable', modal).style.display = 'flex';
-      } 
-      // ৩. সফল লগইন ও সাবস্ক্রিপশন লজিক
-      else if (res === "success_exam") {
-        // যদি ইউজার আগে থেকে কোনো নির্দিষ্ট পেজে যেতে চেয়ে থাকে (redirect variable), সেখানে যাবে, নয়তো exam.php-তে যাবে
+      } else if (res === "success_exam") {
         window.location.href = redirect || "exam.php";
       } else if (res === "success_subscription") {
-        // সাবস্ক্রিপশন না থাকলে subscription.php-তে নিয়ে যাবে
         window.location.href = "subscription.php";
       } else {
-        // সেফটি ফলব্যাক (অন্য কোনো URL রিটার্ন করলে)
         window.location.href = redirect || res || "exam.php";
       }
     })
@@ -953,10 +1182,7 @@ if (loginForm) {
 }
 
 /* ==========================================================
-   GUEST MODE: pages that need an account ask the visitor to log in first.
-   Public pages (circulars.php, register.php) open normally.
-   NOTE: this only guides the visitor. Real protection must also be done in PHP
-   on each page, e.g.  if (!isset($_SESSION['user_id'])) { header('Location: index.php?login=1'); exit; }
+   GUEST MODE PROTECTION
    ========================================================== */
 const PROTECT = [
   [/exam_history\.php/,        'Exam Records দেখতে'],
@@ -965,8 +1191,6 @@ const PROTECT = [
   [/leaderboard\.php/,         'Leaderboard দেখতে'],
   [/subscription\.php|checkout\.php/, 'প্ল্যান নিতে'],
 ];
-const toastEl = $('#toast'); let tt;
-function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => toastEl.classList.remove('show'), 2600); }
 document.addEventListener('click', e => {
   const a = e.target.closest('a[href]');
   if (!a) return;
@@ -974,10 +1198,7 @@ document.addEventListener('click', e => {
   let why = a.dataset.protect;
   if (!why) { const m = PROTECT.find(([re]) => re.test(h)); if (m) why = m[1]; }
   if (why) { e.preventDefault(); openLogin(why, h); return; }
-  /* DEMO ONLY: the public .php pages do not exist in this preview */
-  //if (/\.php/.test(h)) { e.preventDefault(); toast('ডেমো: এই লিংক আপনার সাইটে ' + h.split('?')[0] + ' পেজে যাবে'); }
 });
-/* open the login popup automatically when the page is opened as index.php?login=1 */
 if (/[?&]login=1/.test(location.search)) openLogin('এই পেজ দেখতে');
 </script>
 </body>
