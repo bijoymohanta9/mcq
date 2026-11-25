@@ -25,7 +25,7 @@
             <!-- Right: Developer Branding -->
             <div class="flex items-center space-x-1 font-medium">
                 <span>Developed by</span>
-                <a href="https://vfctechnologies.com" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-800 font-semibold transition hover:underline">
+                <a href="https://vfctechbd.com" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-800 font-semibold transition hover:underline">
                     VFC Technologies
                 </a>
             </div>
